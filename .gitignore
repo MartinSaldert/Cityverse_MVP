@@ -1,0 +1,33 @@
+node_modules/
+.pnpm-store/
+dist/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+
+# Unity generated folders
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/UserSettings/
+**/MemoryCaptures/
+
+# Unity IDE and cache noise
+**/.vscode/
+**/*.csproj
+**/*.sln
+**/*.slnx
+**/*.user
+**/*.pidb
+**/*.booproj
+**/*.svd
+**/*.pdb
+**/*.mdb
+**/*.opendb
+**/*.VC.db

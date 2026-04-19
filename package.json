@@ -1,0 +1,15 @@
+{
+  "name": "cityverse-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.8.1",
+  "scripts": {
+    "build": "node scripts/build-all.mjs",
+    "build:contracts": "pnpm --filter @cityverse/contracts build",
+    "build:vc": "pnpm --filter @cityverse/vc build",
+    "build:iot": "pnpm --filter @cityverse/iot build",
+    "start:vc": "node scripts/start-vc.mjs",
+    "start:iot": "node scripts/start-iot.mjs",
+    "test": "pnpm build && node --test tests/*.test.mjs"
+  }
+}

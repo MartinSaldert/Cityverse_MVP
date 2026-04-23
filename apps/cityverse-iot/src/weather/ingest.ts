@@ -1,6 +1,8 @@
 import mqtt from 'mqtt'
 import { WeatherTelemetrySchema, mqttTopics } from '@cityverse/contracts'
 import { setLatestTelemetry } from './state.js'
+import { recordFlowIngest, recordBrokerConnected, recordBrokerDisconnected } from '../ops/flowRegistry.js'
+import { appendHistoryRecord } from '../history/store.js'
 import type { FastifyBaseLogger } from 'fastify'
 
 export function startWeatherIngest(log: FastifyBaseLogger): mqtt.MqttClient {
@@ -8,6 +10,7 @@ export function startWeatherIngest(log: FastifyBaseLogger): mqtt.MqttClient {
   const client = mqtt.connect(brokerUrl)
 
   client.on('connect', () => {
+    recordBrokerConnected('weather')
     log.info({ brokerUrl }, 'MQTT connected')
     client.subscribe(mqttTopics.weatherTelemetry, (err) => {
       if (err) {
@@ -36,8 +39,17 @@ export function startWeatherIngest(log: FastifyBaseLogger): mqtt.MqttClient {
     }
 
     setLatestTelemetry(result.data)
+    recordFlowIngest('weather', result.data.timestamp)
+    appendHistoryRecord('weather', result.data.timestamp, {
+      temperatureC: result.data.temperatureC,
+      cloudCover: result.data.cloudCover,
+      precipitationMmH: result.data.precipitationMmH,
+      windSpeedMs: result.data.windSpeedMs,
+    })
     log.debug({ timestamp: result.data.timestamp }, 'Weather telemetry ingested')
   })
+
+  client.on('offline', () => { recordBrokerDisconnected('weather') })
 
   client.on('error', (err) => {
     log.error({ err }, 'MQTT client error')

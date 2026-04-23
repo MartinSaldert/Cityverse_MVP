@@ -14,20 +14,25 @@ IOT must own:
 - normalization
 - telemetry history persistence
 - latest-state projections
-- dataset import and replay support
+- flow registry and flow supervision
 - aggregate calculations or rollups
 - query APIs
 - live update fan-out
+- operational monitoring surfaces
+- dataset import and replay support
 
 ## First MVP Scope for IOT
 
 The first working IOT should support:
 - MQTT ingest for telemetry
-- history storage
+- history storage direction, even if first storage remains modest
 - latest-state projection storage
 - HTTP query API
-- WebSocket or similar live updates
-- dataset registry and basic replay controls
+- flow-oriented extensibility so new telemetry streams are easy to add
+- operational monitoring and freshness tracking
+- a first monitoring UI for flow health and current summaries
+- WebSocket or similar live updates later
+- dataset registry and basic replay controls later
 
 ## Phase 1, executable skeleton
 
@@ -58,7 +63,9 @@ The first working IOT should support:
 - normalization logic
 - history persistence
 - projection update pipeline
+- flow registration pattern for multiple telemetry streams
 - ingest error logging
+- freshness and message counter tracking
 
 ## Phase 4, query API
 
@@ -66,13 +73,19 @@ The first working IOT should support:
 - history query endpoint
 - current entity state endpoint
 - aggregate query endpoint
+- flow status endpoint
+- operational stats endpoint
 - dataset listing endpoint
 - replay status endpoint
 
-## Phase 5, live update stream
+## Phase 5, monitoring UI and live update stream
 
 ### Deliver
-- subscription-capable live update stream
+- first IOT monitoring UI
+- per-flow health cards
+- freshness indicators
+- current-state summaries
+- subscription-capable live update stream later
 - entity filtering
 - aggregate filtering
 - selected twin/state change events
@@ -104,12 +117,13 @@ Suggested internal module layout:
 
 The first IOT demo should:
 - ingest weather telemetry
+- ingest energy telemetry
 - ingest building telemetry
-- ingest generator telemetry
-- persist those events
+- track whether those flows are healthy and fresh
 - update latest state
-- serve current state to DT
-- serve history to simple test queries
+- expose current state to DT
+- expose flow health and current summaries to an IOT UI
+- prepare the ground for historical queries rather than remaining latest-state-only
 
 ## Open Decisions to Confirm
 

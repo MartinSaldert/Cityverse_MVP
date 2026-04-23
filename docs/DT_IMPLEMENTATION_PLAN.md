@@ -1,5 +1,69 @@
 # Cityverse MVP, DT Implementation Plan
 
+## Session note, 2026-04-22
+
+A substantial Unity-first DT UI implementation pass has already started, and AI/avatar planning has now been added as a parallel design track.
+
+That means this plan should now be read alongside the current Unity runtime work, not as a blank-slate DT design document.
+
+### Where the Unity DT UI stands now
+- Unity is currently acting as the visualization-facing DT client against IOT
+- live building data is already flowing into Unity from `http://localhost:3002/buildings/current`
+- live weather data is already flowing into Unity from `http://localhost:3002/weather/current`
+- the active UI direction is a **Canvas-based hybrid DT UX**:
+  - one small marker per building
+  - one shared world-space quick card
+  - one shared HUD detail panel
+  - one time/weather widget in the HUD
+- installer/menu path exists in Unity:
+  - `Tools/Cityverse/Install Building UI`
+  - `Tools/Cityverse/Switch To Expert Mode`
+  - `Tools/Cityverse/Switch To Kids Mode`
+- code now also includes interaction-side building components for hover/click selection behavior
+
+### Practical starting point for the next session
+Start from the live Unity scene, not from theory.
+
+First checks tomorrow should be:
+1. run `Tools/Cityverse/Install Building UI`
+2. verify building markers are installed on all buildings
+3. verify hover shows the shared quick card
+4. verify click updates the shared HUD detail panel
+5. verify weather/time widget opens the intended weather HUD
+6. verify kids mode and expert mode both render correctly
+7. continue UI polish only after the shared marker/hover/click path is behaving correctly
+
+### Recommended immediate next implementation focus
+Before any larger DT service-layer expansion, finish the current Unity DT UX slice:
+- interaction polish for hover/click/select
+- kids mode verification and polish
+- weather HUD behavior and weather widget binding
+- removal/fallback strategy for old legacy overlay components
+- visual polish on marker, quick card, and HUD hierarchy
+
+### Parallel planning track now active: Cityverse AI assistant
+A separate but related planning track is now active for an AI assistant that can:
+- interact with VC controls
+- discuss system results
+- analyze scenario changes across the VC → IOT → DT chain
+- later support a speaking avatar presence in the DT
+
+Current recommendation:
+- Phase 1 and 2 should be **tool-driven and cloud-first**
+- predictive reasoning should come from a scenario-analysis layer, not model guessing
+- Phase 3 should introduce a focused RAG layer for docs/runbooks/history
+- Phase 4 may add local inference support (Mac and/or DGX Spark)
+
+### Parallel planning track now active: avatar embodiment
+Avatar planning also started.
+
+Current recommendation:
+- use a Unity-native avatar
+- use Animator-driven idle/breathing/pose layers
+- use audio-driven lip sync / facial animation for speech
+- likely investigate NVIDIA Audio2Face for the speech/facial layer
+- do not expect Audio2Face to replace the general pose/idle animation system
+
 ## Purpose
 
 This document defines the first implementation plan for **DT**.

@@ -3,7 +3,11 @@ export type WeatherCategory = 'storm' | 'rain' | 'cloudy' | 'partly_cloudy' | 'c
 
 export interface WeatherState {
   simTime: string
+  locationId: string
   season: Season
+  sunrise: number
+  sunset: number
+  daylightHours: number
   daylightFactor: number
   solarRadiationWm2: number
   pressureHpa: number

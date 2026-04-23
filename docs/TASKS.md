@@ -11,7 +11,7 @@ The project direction is currently:
 - simulation of time, weather, buildings, occupancy, traffic, emissions, and energy systems,
 - realistic data flow between VC, IOT, and DT.
 
-## Current implementation snapshot, verified 2026-04-19
+## Current implementation snapshot, verified 2026-04-20
 
 Already implemented in code:
 - monorepo scaffold
@@ -28,20 +28,37 @@ Already implemented in code:
 - IOT current weather, energy, demand, and city aggregate endpoints
 - Unity receiver docs for weather and energy polling
 
-Not yet implemented or not yet verified end to end:
-- real automated tests
-- verified full MQTT broker plus VC plus IOT plus Unity run on a target Windows PC
+Not yet implemented or not yet verified strongly enough:
+- expanded automated tests beyond current smoke coverage
 - explicit building entity model in VC
 - explicit generator control model in VC
 - CO2 model
 - traffic model
 - live push consumption path for Unity
 
+Already manually verified end to end on the target Windows PC:
+- MQTT broker plus VC plus IOT plus Unity polling path
+
 ## Immediate practical tasks
 
-### 1. Run the full vertical slice end to end
+### 1. Expand automated smoke tests
 Goal:
-- verify the current implementation with a real MQTT broker and a real Windows or equivalent test environment
+- strengthen the current test suite so the verified vertical slice stays verified
+
+Minimum useful coverage:
+- VC health and route shape checks
+- IOT health and route shape checks
+- contract validation for sample payloads
+- city aggregate calculation sanity checks
+- demand calculation sanity checks
+- targeted checks for weather nudge behavior and downstream shape stability
+
+Status: in progress, first smoke suite exists  
+Priority: very high
+
+### 2. Keep the Windows PC vertical slice as the regression baseline
+Goal:
+- preserve the manually verified Windows workflow as the reference acceptance path after code changes
 
 Check:
 - VC starts
@@ -51,23 +68,9 @@ Check:
 - IOT receives weather and energy telemetry
 - Unity receives weather and energy over HTTP polling
 
-Status: ready to test  
+Status: manually verified  
 Priority: very high  
-Primary doc: `docs/WINDOWS_PC_TEST_PLAN.md`
-
-### 2. Add automated smoke tests
-Goal:
-- replace the placeholder `pnpm test` script with real coverage for the current slice
-
-Minimum useful coverage:
-- VC health and route shape checks
-- IOT health and route shape checks
-- contract validation for sample payloads
-- city aggregate calculation sanity checks
-- demand calculation sanity checks
-
-Status: pending  
-Priority: very high
+Primary docs: `docs/WINDOWS_PC_TEST_PLAN.md`, `docs/PC_VERIFIED_TEST_WORKFLOW.md`, `docs/PC_REGRESSION_CHECKLIST.md`
 
 ### 3. Define the MVP building roster
 Goal:
@@ -93,7 +96,7 @@ Desired result:
 - city demand becomes an aggregate of actual simulated building records
 
 Status: pending  
-Priority: high
+Priority: very high
 
 ### 5. Extend energy model beyond renewable-only summary
 Goal:

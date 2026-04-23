@@ -1,19 +1,16 @@
 import type { CitySummary, DemandSummary } from '@cityverse/contracts'
 import { getLatestEnergy } from '../energy/state.js'
 import { getLatestSummary as getLatestWeather } from '../weather/state.js'
+import { getLatestBuildings } from '../buildings/state.js'
 
 export function getLatestDemand(): DemandSummary | null {
-  const weather = getLatestWeather()
-  if (!weather) return null
+  const buildings = getLatestBuildings()
+  if (!buildings) return null
 
-  const baseDemandKw = 900
-  const heatingDemandKw = weather.temperatureC < 12 ? (12 - weather.temperatureC) * 35 : 0
-  const coolingDemandKw = weather.temperatureC > 22 ? (weather.temperatureC - 22) * 28 : 0
-  const nightDemandKw = weather.isDaytime ? 0 : 120
-
+  const demandKw = buildings.buildings.reduce((sum, b) => sum + b.currentDemandKw, 0)
   return {
-    demandKw: baseDemandKw + heatingDemandKw + coolingDemandKw + nightDemandKw,
-    updatedAt: weather.updatedAt,
+    demandKw,
+    updatedAt: buildings.updatedAt,
   }
 }
 
@@ -28,6 +25,6 @@ export function getLatestCity(): CitySummary | null {
     energy,
     demand,
     balanceKw: energy.totalRenewableKw - demand.demandKw,
-    updatedAt: weather.updatedAt,
+    updatedAt: demand.updatedAt,
   }
 }

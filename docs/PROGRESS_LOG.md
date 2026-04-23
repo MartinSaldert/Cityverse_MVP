@@ -1,11 +1,28 @@
 # Cityverse MVP, Progress Log
 
+## 2026-04-20
+
+### Windows PC vertical slice manually verified
+- Martin confirmed the current Windows PC workflow checks out OK so far
+- verified path remains: sync source to local PC mirror, build locally, run Mosquitto, start VC, start IOT, verify browser and Unity polling flow
+- this should now be treated as the practical regression baseline rather than an unverified future step
+
+### Test status clarified
+- `pnpm test` is not a placeholder anymore
+- `tests/smoke.test.mjs` exists and covers core route and contract checks
+- coverage is still modest and should be expanded, but the repo is no longer in a zero-test state
+
+### Next implementation target clarified
+- the next major code step should be replacing the synthetic aggregate demand formula with an explicit building roster and building-driven demand model
+- current demand logic still lives in `apps/cityverse-vc/src/city/service.ts` as a simple weather-based aggregate formula
+- generator modeling should follow once the building load layer is explicit
+
 ## 2026-04-19
 
 ### Current implementation status verified
 - root monorepo scripts are present and working
 - `pnpm build` completes successfully for contracts, VC, and IOT
-- `pnpm test` is still a placeholder and does not run a real automated test suite yet
+- `pnpm test` now exists and runs the current smoke test suite, though coverage remains limited
 
 ### Shared contracts implemented
 - weather summary and telemetry schemas

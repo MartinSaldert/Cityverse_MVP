@@ -14,6 +14,10 @@ export function toWeatherSummary(state: WeatherState) {
     precipitationMmH: state.precipitation01 * 10,
     isDaytime: state.daylightFactor > 0.01,
     season: state.season,
+    sunrise: state.sunrise,
+    sunset: state.sunset,
+    daylightHours: state.daylightHours,
+    locationId: state.locationId,
     updatedAt: state.simTime,
   })
 }

@@ -16,14 +16,18 @@ The broker should feel believable enough that downstream systems can interact wi
 
 IOT must:
 - ingest synthetic data from VC,
-- store incoming data in a database,
+- make it easy to add and remove telemetry flows,
+- store incoming data in a database or equivalent historical memory layer,
 - support retrieval of historical data,
 - support live data recording while the simulation is running,
+- expose current-state projections efficiently,
+- provide flow health and operational visibility,
 - provide a realistic enough structure to resemble a production IoT backend.
 
 This means IOT should serve both as:
-- a live telemetry ingestion service, and
-- a persistent historical data platform.
+- a live telemetry ingestion service,
+- a persistent historical data platform,
+- and a flow-aware observability layer.
 
 ## Historical Data Requirement
 
@@ -114,14 +118,19 @@ The reference comparison is Azure-style IoT infrastructure. That does not mean t
 
 IOT sits between VC and DT as the primary data backbone.
 
-A likely flow is:
+The intended path is:
 1. VC simulates sensors, buildings, weather, traffic, and energy systems,
 2. VC publishes synthetic telemetry into IOT,
-3. IOT ingests, normalizes, and stores the data,
-4. DT consumes live and historical data from IOT,
-5. Unity or another visual client renders the current or replayed state.
+3. IOT ingests, validates, normalizes, and stores the data,
+4. IOT updates latest-state projections and operational flow status,
+5. DT and Unity consume live and historical data from IOT,
+6. Unity or another visual client renders the current or replayed state.
 
-This interaction model should be investigated with the explicit goal of matching real-world IoT architecture patterns as well as practical MVP constraints allow.
+This interaction model should match real-world IoT architecture patterns as closely as the MVP allows.
+
+The key rule is simple:
+- no direct VC-to-Unity shortcut for normal data consumption
+- the IOT layer must remain the believable broker and telemetry platform
 
 ## Data Persistence
 
@@ -159,9 +168,12 @@ That means APIs, protocols, and data contracts should be designed with future di
 For the MVP, IOT should support:
 - a defined set of synthetic city entities,
 - a normalized telemetry schema,
-- one year of seeded fake history,
+- easy extension for new flows such as weather, energy, buildings, generators, and CO2,
+- one year of seeded fake history as the target direction,
 - live recording during simulation runtime,
 - query access to historical and recent data,
+- current-state projections,
+- flow health and freshness visibility,
 - enough realism that dashboards, AI workflows, and DT views can use it credibly.
 
 ## Immediate Design Questions

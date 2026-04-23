@@ -10,6 +10,7 @@
     "build:iot": "pnpm --filter @cityverse/iot build",
     "start:vc": "node scripts/start-vc.mjs",
     "start:iot": "node scripts/start-iot.mjs",
+    "start:all": "node scripts/start-all.mjs",
     "test": "pnpm build && node --test tests/*.test.mjs"
   }
 }

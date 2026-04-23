@@ -29,6 +29,11 @@ export function getLatestSummary(): WeatherSummary | null {
   return latestSummary
 }
 
+export function resetLatestWeather(): void {
+  latestTelemetry = null
+  latestSummary = null
+}
+
 function deriveCondition(cloudCover: number, precipitationMmH: number, windSpeedMs: number): WeatherSummary['condition'] {
   if (precipitationMmH > 4 && windSpeedMs > 12) return 'storm'
   if (precipitationMmH > 0.1) return 'rain'

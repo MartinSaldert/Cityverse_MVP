@@ -31,6 +31,9 @@ Behavior notes:
 - stronger evening load
 - moderate weather sensitivity
 
+Priority:
+- essential
+
 ### 2. Villa B
 Type:
 - detached residential house
@@ -41,18 +44,26 @@ Role in demo:
 Behavior notes:
 - similar profile to Villa A, but allow slight random variation
 
+Priority:
+- essential
+
 ### 3. Apartment Building
 Type:
 - multi-family residential
 
 Role in demo:
 - provides steadier residential demand than villas
-- useful counterweight to office and retail patterns
+- makes the district feel denser and more urban
+- useful counterweight to office, retail, and industrial patterns
 
 Behavior notes:
 - always partially occupied
 - morning and evening peaks
 - more stable overnight base load
+- moderate weather sensitivity
+
+Priority:
+- essential
 
 ### 4. Office Building
 Type:
@@ -67,6 +78,9 @@ Behavior notes:
 - strongest load during workday
 - reduced load at night
 
+Priority:
+- essential
+
 ### 5. Retail Building
 Type:
 - shop, café, or convenience retail
@@ -79,6 +93,9 @@ Behavior notes:
 - opens later than office
 - midday and late-afternoon activity
 - lighting and climate load matter visibly
+
+Priority:
+- essential
 
 ### 6. School or Municipal Building
 Type:
@@ -93,7 +110,29 @@ Behavior notes:
 - low night usage
 - modest weather sensitivity
 
-### 7. Utility Node or Substation
+Priority:
+- essential
+
+### 7. Factory or Industrial Building
+Type:
+- light industrial or small factory site
+
+Role in demo:
+- provides a clearly understandable high-load industrial consumer
+- makes the city's energy story more believable
+- creates a strong contrast with office and residential demand
+
+Behavior notes:
+- high weekday daytime demand
+- may start earlier than office activity
+- lower but non-zero off-hours base load
+- relatively high total demand compared with most other buildings
+- moderate weather sensitivity, but less residential-style variation
+
+Priority:
+- essential
+
+### 8. Utility Node or Substation
 Type:
 - infrastructure support building or fenced service node
 
@@ -104,6 +143,9 @@ Role in demo:
 Behavior notes:
 - low direct demand importance in MVP
 - mainly a scene and narrative support element
+
+Priority:
+- highly recommended
 
 ## Recommended non-building energy assets
 

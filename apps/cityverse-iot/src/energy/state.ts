@@ -9,3 +9,7 @@ export function setLatestEnergy(summary: EnergySummary): void {
 export function getLatestEnergy(): EnergySummary | null {
   return latestEnergy
 }
+
+export function resetLatestEnergy(): void {
+  latestEnergy = null
+}

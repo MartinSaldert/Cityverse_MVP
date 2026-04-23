@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Cityverse — IOT Broker</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: var(--accent-teal);
+    --bg-0: oklch(0.18 0.012 230);
+    --bg-1: oklch(0.215 0.014 230);
+    --bg-2: oklch(0.255 0.016 230);
+    --bg-inset: oklch(0.155 0.011 230);
+    --line: oklch(0.32 0.015 230 / 0.55);
+    --line-strong: oklch(0.38 0.02 230 / 0.9);
+    --line-soft: oklch(0.28 0.012 230 / 0.35);
+    --text-0: oklch(0.96 0.008 220);
+    --text-1: oklch(0.78 0.012 225);
+    --text-2: oklch(0.58 0.015 228);
+    --text-3: oklch(0.44 0.012 230);
+
+    --accent-teal:   oklch(0.78 0.12 190);
+    --accent-lime:   oklch(0.86 0.16 135);
+    --accent-amber:  oklch(0.82 0.14 75);
+    --accent-rose:   oklch(0.72 0.14 20);
+    --accent-violet: oklch(0.74 0.12 285);
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+    --cond: 'IBM Plex Sans Condensed', var(--sans);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg-0); color: var(--text-0); }
+  body {
+    font-family: var(--sans); font-feature-settings: "ss01","cv11","tnum";
+    font-variant-numeric: tabular-nums; min-height: 100vh;
+    -webkit-font-smoothing: antialiased; letter-spacing: -0.002em;
+  }
+
+  .bg-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, oklch(0.3 0.02 220 / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.3 0.02 220 / 0.08) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, #000 20%, transparent 80%);
+  }
+  .bg-glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1000px 600px at 78% 14%, color-mix(in oklch, var(--accent) 12%, transparent), transparent 60%),
+      radial-gradient(800px 500px at 10% 90%, oklch(0.4 0.08 230 / 0.18), transparent 60%);
+  }
+  .bg-grain {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay; opacity: 0.3;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 18px 22px 28px; }
+
+  /* Chrome */
+  .chrome { display: flex; align-items: center; gap: 14px; padding: 8px 4px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-name { font-family: var(--cond); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 13px; }
+  .brand-sub  { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); letter-spacing: 0.16em; text-transform: uppercase; }
+  .chrome-divider { width: 1px; height: 22px; background: var(--line); }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 6px; color: var(--text-2); cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .tab.active {
+    color: var(--text-0);
+    background: color-mix(in oklch, var(--accent) 12%, transparent);
+    border-color: color-mix(in oklch, var(--accent) 35%, var(--line));
+  }
+  .chrome-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    color: var(--text-1); text-transform: uppercase; background: oklch(0.2 0.012 230 / 0.6);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-lime); box-shadow: 0 0 10px var(--accent-lime); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+  .panel {
+    background: linear-gradient(180deg, oklch(0.24 0.014 230 / 0.7), oklch(0.2 0.012 230 / 0.75));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    position: relative; backdrop-filter: blur(6px);
+  }
+  .panel::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background: linear-gradient(180deg, oklch(1 0 0 / 0.04), transparent 40%); }
+  .panel-hd { display: flex; align-items: center; gap: 10px; padding: 11px 14px 10px; border-bottom: 1px solid var(--line-soft); }
+  .panel-hd .label { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--text-2); }
+  .panel-hd .hd-sep { flex: 1; height: 1px; background: var(--line-soft); }
+  .panel-hd .hd-meta { font-family: var(--mono); font-size: 10.5px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; }
+  .panel-hd .hd-idx { font-family: var(--mono); font-size: 10.5px; color: var(--accent); letter-spacing: 0.14em; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .hero-broker { padding: 16px 20px 18px; }
+  .hero-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 14px;
+  }
+  .hero-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .hero-title .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; color: var(--text-2); text-transform: uppercase; }
+  .hero-title .name { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
+  .hero-title .endpoint { font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: 0.04em; }
+
+  .status-lamp {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  }
+  .lamp-row {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border: 1px solid color-mix(in oklch, var(--accent-lime) 35%, var(--line));
+    border-radius: 8px;
+    background: color-mix(in oklch, var(--accent-lime) 8%, transparent);
+  }
+  .lamp-row .l-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent-lime);
+    box-shadow: 0 0 12px var(--accent-lime), inset 0 0 0 1px oklch(1 0 0 / 0.3);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .lamp-row .l-text { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-lime); }
+  .lamp-meta { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; }
+
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    padding-top: 14px; border-top: 1px dashed var(--line-soft);
+  }
+  .hstat { display: flex; flex-direction: column; gap: 5px; }
+  .hstat .lbl { font-family: var(--mono); font-size: 9.5px; color: var(--text-2); letter-spacing: 0.18em; text-transform: uppercase; }
+  .hstat .val { font-family: var(--mono); font-size: 26px; color: var(--text-0); letter-spacing: -0.015em; line-height: 1; }
+  .hstat .val .u { font-size: 11px; color: var(--text-2); margin-left: 4px; letter-spacing: 0.04em; }
+  .hstat .val.pos { color: var(--accent-lime); }
+  .hstat .sub { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.12em; }
+  .hstat .sub b { color: var(--text-0); font-weight: 500; }
+
+  /* Ingest stream */
+  .hero-stream { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .stream-meta {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-2); letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .stream-meta .rate { color: var(--text-0); font-size: 16px; letter-spacing: -0.01em; }
+  .stream-meta .rate .u { font-size: 10px; color: var(--text-2); margin-left: 3px; letter-spacing: 0.12em; }
+  .stream-meta .rate.neg { color: var(--accent-amber); }
+
+  .stream-chart { position: relative; height: 120px; border: 1px solid var(--line-soft); border-radius: 6px; background: oklch(0.17 0.012 230 / 0.6); overflow: hidden; }
+  .stream-chart svg { display: block; width: 100%; height: 100%; }
+
+  .stream-legend { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--mono); font-size: 10.5px; color: var(--text-2); letter-spacing: 0.12em; text-transform: uppercase; }
+  .stream-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .stream-legend .sw { width: 10px; height: 2px; }
+  .stream-legend .sw.wx  { background: var(--accent-teal); }
+  .stream-legend .sw.en  { background: var(--accent-lime); }
+  .stream-legend .sw.bld { background: var(--accent-amber); }
+
+  /* Flow Health cards */
+  .flows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+  .flow { padding: 14px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .flow-head { display: flex; align-items: center; gap: 10px; }
+  .flow-head .icon {
+    width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center;
+    border: 1px solid var(--line-soft); background: oklch(0.24 0.012 230 / 0.7);
+  }
+  .flow-head .name { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+  .flow-head .topic { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.08em; margin-top: 1px; }
+  .flow-head .status {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 4px 8px; border-radius: 3px;
+    border: 1px solid color-mix(in oklch, var(--accent-lime) 35%, var(--line));
+    color: var(--accent-lime);
+    background: color-mix(in oklch, var(--accent-lime) 10%, transparent);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .flow-head .status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .flow-head .status.warn {
+    border-color: color-mix(in oklch, var(--accent-amber) 35%, var(--line));
+    color: var(--accent-amber);
+    background: color-mix(in oklch, var(--accent-amber) 10%, transparent);
+  }
+
+  .flow-sparkbar {
+    height: 32px; position: relative;
+    border: 1px solid var(--line-soft); border-radius: 5px;
+    background: oklch(0.17 0.012 230 / 0.6); overflow: hidden;
+  }
+  .flow-sparkbar svg { width: 100%; height: 100%; display: block; }
+  .flow-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 14px;
+    padding-top: 2px;
+  }
+  .flow-grid .k { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.14em; text-transform: uppercase; }
+  .flow-grid .v { font-family: var(--mono); font-size: 12px; color: var(--text-0); text-align: right; }
+  .flow-grid .v .u { font-size: 10px; color: var(--text-2); margin-left: 3px; }
+  .flow-grid .cell { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--line-soft); }
+  .flow-grid .cell:nth-last-child(-n+2) { border-bottom: none; }
+
+  .freshness {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
+    padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 5px;
+    background: oklch(0.2 0.012 230 / 0.7);
+  }
+  .freshness .fbar {
+    height: 4px; border-radius: 2px; background: oklch(0.26 0.012 230); position: relative; overflow: hidden;
+  }
+  .freshness .fbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-lime), color-mix(in oklch, var(--accent-lime) 60%, transparent));
+  }
+  .freshness.warn .fbar i { background: linear-gradient(90deg, var(--accent-amber), color-mix(in oklch, var(--accent-amber) 60%, transparent)); }
+  .freshness .label { font-family: var(--mono); font-size: 9.5px; color: var(--text-2); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 4px; }
+  .freshness .age { font-family: var(--mono); font-size: 12px; color: var(--text-0); letter-spacing: -0.005em; }
+  .freshness.warn .age { color: var(--accent-amber); }
+
+  /* Current state strip */
+  .state-row { display: grid; grid-template-columns: 1.05fr 1fr 1.2fr; gap: 14px; margin-bottom: 14px; }
+
+  /* Weather state */
+  .wx-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .wx-top { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed var(--line-soft); }
+  .wx-icon { width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, color-mix(in oklch, var(--accent-amber) 65%, transparent), color-mix(in oklch, var(--accent-amber) 20%, transparent) 55%, transparent 70%);
+    position: relative;
+  }
+  .wx-icon::before { content:""; position:absolute; inset:14px; border-radius:50%; background: var(--accent-amber); box-shadow: 0 0 16px color-mix(in oklch, var(--accent-amber) 55%, transparent); }
+  .wx-cond .main { font-size: 15px; font-weight: 500; }
+  .wx-cond .sub { display: block; font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+  .wx-temp { font-family: var(--mono); font-size: 34px; font-weight: 300; letter-spacing: -0.02em; }
+  .wx-temp sup { font-size: 16px; color: var(--text-2); font-weight: 300; }
+
+  .wx-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 14px; }
+  .wx-grid .cell { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--line-soft); }
+  .wx-grid .cell:nth-last-child(-n+2) { border-bottom: none; }
+  .wx-grid .cell .k { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.14em; text-transform: uppercase; }
+  .wx-grid .cell .v { font-family: var(--mono); font-size: 12px; color: var(--text-0); }
+  .wx-grid .cell .v .u { font-size: 10px; color: var(--text-2); margin-left: 3px; }
+
+  .daylight {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 6px 10px; border: 1px solid var(--line-soft); border-radius: 5px;
+    background: oklch(0.2 0.012 230 / 0.7);
+    font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .daylight b { color: var(--text-0); font-weight: 500; margin-left: 4px; }
+  .daylight .daytag {
+    font-family: var(--mono); font-size: 10px; color: var(--accent-amber);
+    padding: 2px 7px; border-radius: 3px; border: 1px solid color-mix(in oklch, var(--accent-amber) 35%, var(--line));
+    background: color-mix(in oklch, var(--accent-amber) 10%, transparent);
+    letter-spacing: 0.14em;
+  }
+
+  /* Energy state */
+  .en-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .en-big {
+    display: flex; align-items: baseline; gap: 8px;
+    padding-bottom: 10px; border-bottom: 1px dashed var(--line-soft);
+  }
+  .en-big .val { font-family: var(--mono); font-size: 32px; color: var(--accent-lime); letter-spacing: -0.01em; line-height: 1; }
+  .en-big .u { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .en-big .lbl { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.16em; text-transform: uppercase; margin-left: auto; }
+
+  .en-row {
+    display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 10px; padding: 4px 0;
+  }
+  .en-row .sd-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--text-2); text-transform: uppercase; }
+  .en-row .sd-value { font-family: var(--mono); font-size: 15px; color: var(--text-0); }
+  .en-row .sd-value .u { font-size: 10px; color: var(--text-2); margin-left: 3px; }
+  .bar { height: 5px; border-radius: 3px; background: oklch(0.26 0.012 230 / 0.9); overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 3px; }
+  .bar.solar > i  { background: linear-gradient(90deg, color-mix(in oklch, var(--accent-amber) 60%, transparent), var(--accent-amber)); }
+  .bar.wind > i   { background: linear-gradient(90deg, color-mix(in oklch, var(--accent-teal) 60%, transparent), var(--accent-teal)); }
+
+  .en-balance {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border: 1px solid color-mix(in oklch, var(--accent-lime) 30%, var(--line-soft));
+    border-radius: 5px;
+    background: color-mix(in oklch, var(--accent-lime) 6%, transparent);
+    font-family: var(--mono); font-size: 11px; color: var(--text-1); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .en-balance b { color: var(--accent-lime); font-size: 13px; letter-spacing: 0; font-weight: 500; }
+
+  /* Buildings summary */
+  .bld-state { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .bld-state .row-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    padding-bottom: 10px; border-bottom: 1px dashed var(--line-soft);
+  }
+  .bld-state .dem { font-family: var(--mono); font-size: 28px; color: var(--text-0); letter-spacing: -0.01em; line-height: 1; }
+  .bld-state .dem .u { font-size: 11px; color: var(--text-2); margin-left: 4px; }
+  .bld-state .dem-lbl { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.16em; text-transform: uppercase; margin-left: auto; }
+
+  .top-list { display: flex; flex-direction: column; gap: 5px; }
+  .top-row {
+    display: grid; grid-template-columns: 22px 1fr 1fr auto; gap: 10px; align-items: center;
+    padding: 6px 2px; border-bottom: 1px dashed var(--line-soft);
+  }
+  .top-row:last-child { border-bottom: none; }
+  .top-row .rk { font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.14em; text-align: center; }
+  .top-row .rk.t { color: var(--accent); }
+  .top-row .bn { font-size: 12.5px; font-weight: 500; letter-spacing: -0.005em; }
+  .top-row .bn .id { display: block; font-family: var(--mono); font-size: 9.5px; color: var(--text-3); letter-spacing: 0.08em; font-weight: 400; margin-top: 1px; }
+  .top-row .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .top-row .bar2 { flex: 1; height: 4px; border-radius: 2px; background: oklch(0.25 0.012 230); overflow: hidden; }
+  .top-row .bar2 i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+  .top-row .bv { font-family: var(--mono); font-size: 12px; color: var(--text-0); }
+  .top-row .bv .u { font-size: 10px; color: var(--text-2); margin-left: 3px; }
+
+  /* Trends (History) */
+  .trends { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
+  .trend { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .trend-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .trend-head .t { font-size: 13px; font-weight: 500; letter-spacing: -0.005em; }
+  .trend-head .t .sub { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.14em; text-transform: uppercase; margin-left: 6px; }
+  .trend-head .delta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; }
+  .trend-head .delta.pos { color: var(--accent-lime); }
+  .trend-head .delta.neg { color: var(--accent-amber); }
+
+  .trend-values {
+    display: grid; grid-template-columns: auto auto; gap: 4px 14px;
+    font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: 0.04em;
+  }
+  .trend-values b { color: var(--text-0); font-weight: 500; margin-left: 4px; }
+
+  .trend-chart { height: 120px; border: 1px solid var(--line-soft); border-radius: 5px;
+    background: oklch(0.17 0.012 230 / 0.7); position: relative; overflow: hidden; }
+  .trend-chart svg { width: 100%; height: 100%; display: block; }
+  .trend-foot { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9.5px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* Observability / stats */
+  .obs-row { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .stats-body { padding: 12px 14px 14px; }
+  table.stats { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.stats thead th {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-2); font-weight: 500; text-align: left;
+    padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  table.stats thead th.num { text-align: right; padding-right: 0; }
+  table.stats tbody td {
+    padding: 10px 10px 10px 0; border-bottom: 1px solid var(--line-soft);
+    font-family: var(--mono); color: var(--text-0);
+  }
+  table.stats tbody tr:last-child td { border-bottom: none; }
+  table.stats .num { text-align: right; padding-right: 0; }
+  table.stats td .u { font-size: 10px; color: var(--text-2); margin-left: 3px; }
+  table.stats .flow-cell { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); }
+  table.stats .flow-cell .sw { width: 8px; height: 8px; border-radius: 2px; }
+  table.stats .sw.wx  { background: var(--accent-teal); }
+  table.stats .sw.en  { background: var(--accent-lime); }
+  table.stats .sw.bld { background: var(--accent-amber); }
+  table.stats .pill-s {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px;
+    border: 1px solid color-mix(in oklch, var(--accent-lime) 35%, var(--line));
+    color: var(--accent-lime);
+    background: color-mix(in oklch, var(--accent-lime) 8%, transparent);
+  }
+  table.stats .pill-s.warn {
+    border-color: color-mix(in oklch, var(--accent-amber) 35%, var(--line));
+    color: var(--accent-amber);
+    background: color-mix(in oklch, var(--accent-amber) 8%, transparent);
+  }
+  table.stats .pill-s .d { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* Events log */
+  .events-body { padding: 4px 14px 14px; max-height: 320px; overflow: auto; }
+  .event { display: grid; grid-template-columns: 92px 70px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line-soft);
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  .event:last-child { border-bottom: none; }
+  .event .ts { color: var(--text-2); letter-spacing: 0.04em; }
+  .event .sev {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 1px 6px; border-radius: 3px; align-self: center; text-align: center;
+    border: 1px solid var(--line-soft); background: oklch(0.22 0.012 230 / 0.7); color: var(--text-1);
+  }
+  .event .sev.ok { color: var(--accent-lime); border-color: color-mix(in oklch, var(--accent-lime) 30%, var(--line)); background: color-mix(in oklch, var(--accent-lime) 8%, transparent); }
+  .event .sev.warn { color: var(--accent-amber); border-color: color-mix(in oklch, var(--accent-amber) 30%, var(--line)); background: color-mix(in oklch, var(--accent-amber) 8%, transparent); }
+  .event .sev.info { color: var(--accent-teal); border-color: color-mix(in oklch, var(--accent-teal) 30%, var(--line)); background: color-mix(in oklch, var(--accent-teal) 8%, transparent); }
+  .event .msg { color: var(--text-0); }
+  .event .msg .code { color: var(--text-2); }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; align-items: center; gap: 18px;
+    padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: oklch(0.2 0.012 230 / 0.6);
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2);
+  }
+  .status-bar b { color: var(--text-0); font-weight: 500; margin-left: 4px; }
+  .status-bar .sep { width: 1px; height: 12px; background: var(--line); }
+  .status-bar .push { margin-left: auto; }
+
+  /* Tweaks */
+  #tweaks { position: fixed; bottom: 18px; right: 18px; z-index: 40; width: 260px; background: oklch(0.2 0.012 230 / 0.95); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 12px; font-size: 12px; backdrop-filter: blur(10px); display: none; }
+  #tweaks.on { display: block; }
+  #tweaks h4 { margin: 0 0 8px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-2); }
+  #tweaks .tw-row { margin-bottom: 10px; }
+  #tweaks .tw-label { font-family: var(--mono); font-size: 10px; color: var(--text-2); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
+  #tweaks .swatches { display: flex; gap: 6px; }
+  #tweaks .sw { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer; }
+  #tweaks .sw.on { box-shadow: inset 0 0 0 2px var(--bg-0), 0 0 0 1.5px currentColor; }
+  #tweaks .seg-tw { display: flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  #tweaks .seg-tw button { flex: 1; padding: 6px 8px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: none; color: var(--text-2); cursor: pointer; }
+  #tweaks .seg-tw button.on { background: color-mix(in oklch, var(--accent) 18%, transparent); color: var(--text-0); }
+  .sw.a-teal   { color: oklch(0.78 0.12 190); background: oklch(0.78 0.12 190); }
+  .sw.a-lime   { color: oklch(0.86 0.16 135); background: oklch(0.86 0.16 135); }
+  .sw.a-amber  { color: oklch(0.82 0.14 75);  background: oklch(0.82 0.14 75); }
+  .sw.a-violet { color: oklch(0.74 0.12 285); background: oklch(0.74 0.12 285); }
+
+  body[data-density="dense"] .trend-chart { height: 96px; }
+</style>
+</head>
+<body data-density="normal">
+  <div class="bg-field" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="bg-grain"></div>
+  </div>
+
+  <div class="app">
+    <!-- CHROME -->
+    <div class="chrome">
+      <div class="brand">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+          <circle cx="13" cy="13" r="11.5" stroke="currentColor" stroke-opacity="0.35"/>
+          <circle cx="13" cy="13" r="7" stroke="currentColor" stroke-opacity="0.55"/>
+          <rect x="13" y="3" width="10" height="10" transform="rotate(45 13 3)" fill="var(--accent)" fill-opacity="0.85"/>
+        </svg>
+        <div>
+          <div class="brand-name">Cityverse <span style="color:var(--accent)">Atlas</span></div>
+          <div class="brand-sub">IOT Broker · Observability</div>
+        </div>
+      </div>
+      <div class="chrome-divider"></div>
+      <div class="tabs">
+        <div class="tab">Operator</div>
+        <div class="tab active">IOT Broker</div>
+        <div class="tab">Logs</div>
+      </div>
+      <div class="chrome-right">
+        <span class="pill"><span class="dot"></span>Broker · Connected</span>
+        <span class="pill">Session · OP-MARTIN</span>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+      <!-- Broker overview -->
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">01</span>
+          <span class="label">Broker Overview</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">mqtt · cityverse-broker-01</span>
+        </div>
+        <div class="hero-broker">
+          <div class="hero-top">
+            <div class="hero-title">
+              <span class="kicker">Service</span>
+              <div class="name">Cityverse IOT Broker</div>
+              <span class="endpoint">mqtt://broker.cityverse.local:1883 · topics: weather/*  energy/*  buildings/*</span>
+            </div>
+            <div class="status-lamp">
+              <div class="lamp-row">
+                <span class="l-dot"></span>
+                <span class="l-text">Healthy · All Flows Active</span>
+              </div>
+              <span class="lamp-meta">Uptime <b style="color:var(--text-0);font-weight:500">04 d 06 h 12 m</b></span>
+            </div>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hstat">
+              <span class="lbl">Active Flows</span>
+              <span class="val">3<span class="u">/ 3</span></span>
+              <span class="sub">weather · energy · buildings</span>
+            </div>
+            <div class="hstat">
+              <span class="lbl">Recent Messages</span>
+              <span class="val">24 186</span>
+              <span class="sub">last 60 min · <b>+412</b>/min</span>
+            </div>
+            <div class="hstat">
+              <span class="lbl">Last Update</span>
+              <span class="val">02<span class="u">s ago</span></span>
+              <span class="sub">weather · <b>14:32:05</b></span>
+            </div>
+            <div class="hstat">
+              <span class="lbl">Overall Health</span>
+              <span class="val pos">OK</span>
+              <span class="sub">0 degraded · 0 stale</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ingest stream -->
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">02</span>
+          <span class="label">Ingest Stream · 60 min</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">msg/min · stacked</span>
+        </div>
+        <div class="hero-stream">
+          <div class="stream-meta">
+            <span>Total · <span class="rate">412<span class="u">msg/min</span></span></span>
+            <span>Peak <b style="color:var(--text-0);font-weight:500">478</b> at <b style="color:var(--text-0);font-weight:500">14:18</b></span>
+          </div>
+          <div class="stream-chart">
+            <svg viewBox="0 0 600 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="gWx" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.78 0.12 190)" stop-opacity="0.55"/>
+                  <stop offset="1" stop-color="oklch(0.78 0.12 190)" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gEn" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.86 0.16 135)" stop-opacity="0.55"/>
+                  <stop offset="1" stop-color="oklch(0.86 0.16 135)" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gBld" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.82 0.14 75)" stop-opacity="0.55"/>
+                  <stop offset="1" stop-color="oklch(0.82 0.14 75)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- grid -->
+              <g stroke="oklch(0.3 0.02 220 / 0.3)" stroke-dasharray="2 4">
+                <line x1="0" y1="30" x2="600" y2="30"/>
+                <line x1="0" y1="60" x2="600" y2="60"/>
+                <line x1="0" y1="90" x2="600" y2="90"/>
+              </g>
+              <!-- wx area (base) -->
+              <path d="M0,95 L30,92 L60,88 L90,90 L120,86 L150,84 L180,88 L210,82 L240,80 L270,84 L300,78 L330,82 L360,76 L390,80 L420,74 L450,78 L480,72 L510,76 L540,70 L570,74 L600,72 L600,120 L0,120 Z" fill="url(#gWx)"/>
+              <polyline fill="none" stroke="oklch(0.78 0.12 190)" stroke-width="1.3"
+                points="0,95 30,92 60,88 90,90 120,86 150,84 180,88 210,82 240,80 270,84 300,78 330,82 360,76 390,80 420,74 450,78 480,72 510,76 540,70 570,74 600,72"/>
+              <!-- energy (mid) -->
+              <path d="M0,72 L30,70 L60,64 L90,68 L120,60 L150,62 L180,58 L210,54 L240,56 L270,50 L300,48 L330,52 L360,46 L390,50 L420,42 L450,48 L480,40 L510,44 L540,38 L570,42 L600,38 L600,120 L0,120 Z" fill="url(#gEn)" fill-opacity="0.8"/>
+              <polyline fill="none" stroke="oklch(0.86 0.16 135)" stroke-width="1.3"
+                points="0,72 30,70 60,64 90,68 120,60 150,62 180,58 210,54 240,56 270,50 300,48 330,52 360,46 390,50 420,42 450,48 480,40 510,44 540,38 570,42 600,38"/>
+              <!-- buildings (top) -->
+              <path d="M0,52 L30,48 L60,42 L90,46 L120,40 L150,38 L180,42 L210,32 L240,36 L270,28 L300,26 L330,30 L360,22 L390,28 L420,18 L450,22 L480,14 L510,20 L540,12 L570,18 L600,14 L600,120 L0,120 Z" fill="url(#gBld)" fill-opacity="0.55"/>
+              <polyline fill="none" stroke="oklch(0.82 0.14 75)" stroke-width="1.3"
+                points="0,52 30,48 60,42 90,46 120,40 150,38 180,42 210,32 240,36 270,28 300,26 330,30 360,22 390,28 420,18 450,22 480,14 510,20 540,12 570,18 600,14"/>
+              <!-- now marker -->
+              <line x1="596" y1="0" x2="596" y2="120" stroke="oklch(0.96 0.008 220 / 0.6)" stroke-dasharray="3 3"/>
+            </svg>
+          </div>
+          <div class="stream-legend">
+            <span class="lg"><span class="sw wx"></span>Weather · <b style="color:var(--text-0);font-weight:500">48/min</b></span>
+            <span class="lg"><span class="sw en"></span>Energy · <b style="color:var(--text-0);font-weight:500">124/min</b></span>
+            <span class="lg"><span class="sw bld"></span>Buildings · <b style="color:var(--text-0);font-weight:500">240/min</b></span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- FLOW HEALTH -->
+    <section style="margin-bottom:14px">
+      <div class="flows">
+        <!-- Weather flow -->
+        <section class="panel flow">
+          <div class="flow-head">
+            <div class="icon">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="7" cy="7" r="2.8" fill="var(--accent-teal)"/>
+                <g stroke="var(--accent-teal)" stroke-width="1.1" stroke-linecap="round">
+                  <line x1="7" y1="0.5" x2="7" y2="2.2"/><line x1="7" y1="11.8" x2="7" y2="13.5"/>
+                  <line x1="0.5" y1="7" x2="2.2" y2="7"/><line x1="11.8" y1="7" x2="13.5" y2="7"/>
+                  <line x1="2.3" y1="2.3" x2="3.5" y2="3.5"/><line x1="10.5" y1="10.5" x2="11.7" y2="11.7"/>
+                  <line x1="2.3" y1="11.7" x2="3.5" y2="10.5"/><line x1="10.5" y1="3.5" x2="11.7" y2="2.3"/>
+                </g>
+              </svg>
+            </div>
+            <div>
+              <div class="name">Weather</div>
+              <div class="topic">cityverse/weather/amsterdam</div>
+            </div>
+            <div class="status"><span class="dot"></span>OK</div>
+          </div>
+          <div class="flow-sparkbar">
+            <svg viewBox="0 0 300 32" preserveAspectRatio="none">
+              <g fill="var(--accent-teal)">
+                <!-- regular bars every 5s -->
+                <rect x="0"   y="10" width="2" height="14"/><rect x="8"   y="8"  width="2" height="16"/>
+                <rect x="16"  y="12" width="2" height="12"/><rect x="24"  y="9"  width="2" height="15"/>
+                <rect x="32"  y="10" width="2" height="14"/><rect x="40"  y="11" width="2" height="13"/>
+                <rect x="48"  y="9"  width="2" height="15"/><rect x="56"  y="10" width="2" height="14"/>
+                <rect x="64"  y="11" width="2" height="13"/><rect x="72"  y="8"  width="2" height="16"/>
+                <rect x="80"  y="10" width="2" height="14"/><rect x="88"  y="12" width="2" height="12"/>
+                <rect x="96"  y="9"  width="2" height="15"/><rect x="104" y="10" width="2" height="14"/>
+                <rect x="112" y="11" width="2" height="13"/><rect x="120" y="9"  width="2" height="15"/>
+                <rect x="128" y="8"  width="2" height="16"/><rect x="136" y="10" width="2" height="14"/>
+                <rect x="144" y="11" width="2" height="13"/><rect x="152" y="12" width="2" height="12"/>
+                <rect x="160" y="10" width="2" height="14"/><rect x="168" y="9"  width="2" height="15"/>
+                <rect x="176" y="10" width="2" height="14"/><rect x="184" y="11" width="2" height="13"/>
+                <rect x="192" y="8"  width="2" height="16"/><rect x="200" y="10" width="2" height="14"/>
+                <rect x="208" y="9"  width="2" height="15"/><rect x="216" y="11" width="2" height="13"/>
+                <rect x="224" y="10" width="2" height="14"/><rect x="232" y="8"  width="2" height="16"/>
+                <rect x="240" y="10" width="2" height="14"/><rect x="248" y="12" width="2" height="12"/>
+                <rect x="256" y="9"  width="2" height="15"/><rect x="264" y="10" width="2" height="14"/>
+                <rect x="272" y="11" width="2" height="13"/><rect x="280" y="8"  width="2" height="16"/>
+                <rect x="288" y="10" width="2" height="14"/><rect x="296" y="9"  width="2" height="15"/>
+              </g>
+            </svg>
+          </div>
+          <div class="flow-grid">
+            <div class="cell"><span class="k">Has Data</span><span class="v">Yes</span></div>
+            <div class="cell"><span class="k">Messages</span><span class="v">4 862</span></div>
+            <div class="cell"><span class="k">Last Payload</span><span class="v">14:32:05</span></div>
+            <div class="cell"><span class="k">Last Ingest</span><span class="v">14:32:06</span></div>
+          </div>
+          <div class="freshness">
+            <div>
+              <div class="label">Freshness</div>
+              <div class="fbar"><i style="width: 92%"></i></div>
+            </div>
+            <div class="age">2 s</div>
+          </div>
+        </section>
+
+        <!-- Energy flow -->
+        <section class="panel flow">
+          <div class="flow-head">
+            <div class="icon">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 0.5 L3 8 L6.5 8 L5 13.5 L11 5.5 L7.5 5.5 L9 0.5 Z" fill="var(--accent-lime)"/>
+              </svg>
+            </div>
+            <div>
+              <div class="name">Energy</div>
+              <div class="topic">cityverse/energy/generation</div>
+            </div>
+            <div class="status"><span class="dot"></span>OK</div>
+          </div>
+          <div class="flow-sparkbar">
+            <svg viewBox="0 0 300 32" preserveAspectRatio="none">
+              <g fill="var(--accent-lime)">
+                <rect x="0"   y="9"  width="2" height="15"/><rect x="6"   y="11" width="2" height="13"/>
+                <rect x="12"  y="8"  width="2" height="16"/><rect x="18"  y="10" width="2" height="14"/>
+                <rect x="24"  y="9"  width="2" height="15"/><rect x="30"  y="12" width="2" height="12"/>
+                <rect x="36"  y="10" width="2" height="14"/><rect x="42"  y="8"  width="2" height="16"/>
+                <rect x="48"  y="11" width="2" height="13"/><rect x="54"  y="9"  width="2" height="15"/>
+                <rect x="60"  y="10" width="2" height="14"/><rect x="66"  y="12" width="2" height="12"/>
+                <rect x="72"  y="9"  width="2" height="15"/><rect x="78"  y="10" width="2" height="14"/>
+                <rect x="84"  y="11" width="2" height="13"/><rect x="90"  y="8"  width="2" height="16"/>
+                <rect x="96"  y="10" width="2" height="14"/><rect x="102" y="9"  width="2" height="15"/>
+                <rect x="108" y="11" width="2" height="13"/><rect x="114" y="10" width="2" height="14"/>
+                <rect x="120" y="8"  width="2" height="16"/><rect x="126" y="9"  width="2" height="15"/>
+                <rect x="132" y="10" width="2" height="14"/><rect x="138" y="12" width="2" height="12"/>
+                <rect x="144" y="9"  width="2" height="15"/><rect x="150" y="10" width="2" height="14"/>
+                <rect x="156" y="11" width="2" height="13"/><rect x="162" y="8"  width="2" height="16"/>
+                <rect x="168" y="10" width="2" height="14"/><rect x="174" y="9"  width="2" height="15"/>
+                <rect x="180" y="10" width="2" height="14"/><rect x="186" y="12" width="2" height="12"/>
+                <rect x="192" y="9"  width="2" height="15"/><rect x="198" y="10" width="2" height="14"/>
+                <rect x="204" y="11" width="2" height="13"/><rect x="210" y="8"  width="2" height="16"/>
+                <rect x="216" y="9"  width="2" height="15"/><rect x="222" y="11" width="2" height="13"/>
+                <rect x="228" y="10" width="2" height="14"/><rect x="234" y="9"  width="2" height="15"/>
+                <rect x="240" y="8"  width="2" height="16"/><rect x="246" y="10" width="2" height="14"/>
+                <rect x="252" y="11" width="2" height="13"/><rect x="258" y="9"  width="2" height="15"/>
+                <rect x="264" y="10" width="2" height="14"/><rect x="270" y="8"  width="2" height="16"/>
+                <rect x="276" y="9"  width="2" height="15"/><rect x="282" y="11" width="2" height="13"/>
+                <rect x="288" y="10" width="2" height="14"/><rect x="294" y="9"  width="2" height="15"/>
+              </g>
+            </svg>
+          </div>
+          <div class="flow-grid">
+            <div class="cell"><span class="k">Has Data</span><span class="v">Yes</span></div>
+            <div class="cell"><span class="k">Messages</span><span class="v">8 214</span></div>
+            <div class="cell"><span class="k">Last Payload</span><span class="v">14:32:06</span></div>
+            <div class="cell"><span class="k">Last Ingest</span><span class="v">14:32:07</span></div>
+          </div>
+          <div class="freshness">
+            <div>
+              <div class="label">Freshness</div>
+              <div class="fbar"><i style="width: 96%"></i></div>
+            </div>
+            <div class="age">1 s</div>
+          </div>
+        </section>
+
+        <!-- Buildings flow -->
+        <section class="panel flow">
+          <div class="flow-head">
+            <div class="icon">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="4" width="4" height="9" fill="var(--accent-amber)"/>
+                <rect x="6" y="1" width="3" height="12" fill="var(--accent-amber)" fill-opacity="0.7"/>
+                <rect x="10" y="6" width="3" height="7" fill="var(--accent-amber)" fill-opacity="0.5"/>
+              </svg>
+            </div>
+            <div>
+              <div class="name">Buildings</div>
+              <div class="topic">cityverse/buildings/+/demand</div>
+            </div>
+            <div class="status warn"><span class="dot"></span>Delayed</div>
+          </div>
+          <div class="flow-sparkbar">
+            <svg viewBox="0 0 300 32" preserveAspectRatio="none">
+              <g fill="var(--accent-amber)">
+                <rect x="0"   y="10" width="2" height="14"/><rect x="5"   y="9"  width="2" height="15"/>
+                <rect x="10"  y="11" width="2" height="13"/><rect x="15"  y="12" width="2" height="12"/>
+                <rect x="20"  y="10" width="2" height="14"/><rect x="25"  y="9"  width="2" height="15"/>
+                <rect x="30"  y="11" width="2" height="13"/><rect x="35"  y="8"  width="2" height="16"/>
+                <rect x="40"  y="10" width="2" height="14"/><rect x="45"  y="11" width="2" height="13"/>
+                <rect x="50"  y="9"  width="2" height="15"/><rect x="55"  y="10" width="2" height="14"/>
+                <rect x="60"  y="12" width="2" height="12"/><rect x="65"  y="10" width="2" height="14"/>
+                <rect x="70"  y="9"  width="2" height="15"/><rect x="75"  y="11" width="2" height="13"/>
+                <rect x="80"  y="8"  width="2" height="16"/><rect x="85"  y="10" width="2" height="14"/>
+                <rect x="90"  y="11" width="2" height="13"/><rect x="95"  y="12" width="2" height="12"/>
+                <rect x="100" y="10" width="2" height="14"/><rect x="105" y="9"  width="2" height="15"/>
+                <rect x="110" y="11" width="2" height="13"/><rect x="115" y="10" width="2" height="14"/>
+                <rect x="120" y="12" width="2" height="12"/><rect x="125" y="11" width="2" height="13"/>
+                <rect x="130" y="14" width="2" height="10"/><rect x="135" y="13" width="2" height="11"/>
+                <rect x="140" y="15" width="2" height="9"/><rect x="145" y="16" width="2" height="8"/>
+                <rect x="150" y="17" width="2" height="7" fill-opacity="0.5"/>
+                <rect x="155" y="18" width="2" height="6" fill-opacity="0.4"/>
+                <rect x="160" y="19" width="2" height="5" fill-opacity="0.4"/>
+                <!-- gap (dropped messages) -->
+                <rect x="170" y="13" width="2" height="11"/><rect x="175" y="11" width="2" height="13"/>
+                <rect x="180" y="10" width="2" height="14"/><rect x="185" y="12" width="2" height="12"/>
+                <rect x="190" y="11" width="2" height="13"/><rect x="195" y="10" width="2" height="14"/>
+                <rect x="200" y="9"  width="2" height="15"/><rect x="205" y="11" width="2" height="13"/>
+                <rect x="210" y="12" width="2" height="12"/><rect x="215" y="10" width="2" height="14"/>
+                <rect x="220" y="11" width="2" height="13"/><rect x="225" y="9"  width="2" height="15"/>
+                <rect x="230" y="10" width="2" height="14"/><rect x="235" y="11" width="2" height="13"/>
+                <rect x="240" y="8"  width="2" height="16"/><rect x="245" y="10" width="2" height="14"/>
+                <rect x="250" y="9"  width="2" height="15"/><rect x="255" y="11" width="2" height="13"/>
+                <rect x="260" y="12" width="2" height="12"/><rect x="265" y="10" width="2" height="14"/>
+                <rect x="270" y="11" width="2" height="13"/><rect x="275" y="9"  width="2" height="15"/>
+                <rect x="280" y="10" width="2" height="14"/><rect x="285" y="11" width="2" height="13"/>
+                <rect x="290" y="12" width="2" height="12"/><rect x="295" y="10" width="2" height="14"/>
+              </g>
+              <!-- gap marker -->
+              <rect x="163" y="0" width="4" height="32" fill="oklch(0.72 0.14 20 / 0.15)"/>
+            </svg>
+          </div>
+          <div class="flow-grid">
+            <div class="cell"><span class="k">Has Data</span><span class="v">Yes</span></div>
+            <div class="cell"><span class="k">Messages</span><span class="v">11 110</span></div>
+            <div class="cell"><span class="k">Last Payload</span><span class="v">14:31:58</span></div>
+            <div class="cell"><span class="k">Last Ingest</span><span class="v">14:31:59</span></div>
+          </div>
+          <div class="freshness warn">
+            <div>
+              <div class="label">Freshness</div>
+              <div class="fbar"><i style="width: 64%"></i></div>
+            </div>
+            <div class="age">9 s</div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- CURRENT STATE -->
+    <div class="state-row">
+      <!-- Weather current -->
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">03</span>
+          <span class="label">Weather · Current</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">Amsterdam · 14:32:05</span>
+        </div>
+        <div class="wx-body">
+          <div class="wx-top">
+            <div class="wx-icon" aria-hidden="true"></div>
+            <div class="wx-cond">
+              <div class="main">Partly cloudy</div>
+              <div class="sub">Season · Summer</div>
+            </div>
+            <div class="wx-temp">19<sup>°C</sup></div>
+          </div>
+          <div class="wx-grid">
+            <div class="cell"><span class="k">Feels Like</span><span class="v">20.4<span class="u">°C</span></span></div>
+            <div class="cell"><span class="k">Humidity</span><span class="v">61<span class="u">%</span></span></div>
+            <div class="cell"><span class="k">Pressure</span><span class="v">1017<span class="u">hPa</span></span></div>
+            <div class="cell"><span class="k">Cloud Cover</span><span class="v">42<span class="u">%</span></span></div>
+            <div class="cell"><span class="k">Wind</span><span class="v">14.2<span class="u">km/h</span></span></div>
+            <div class="cell"><span class="k">Direction</span><span class="v">SW <span class="u">224°</span></span></div>
+            <div class="cell"><span class="k">Precipitation</span><span class="v">0.0<span class="u">mm</span></span></div>
+            <div class="cell"><span class="k">isDaytime</span><span class="v">true</span></div>
+          </div>
+          <div class="daylight">
+            <span>Sunrise<b>05:22</b></span>
+            <span>Sunset<b>21:56</b></span>
+            <span>Daylight<b>16h 34m</b></span>
+            <span class="daytag">Daytime</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Energy current -->
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">04</span>
+          <span class="label">Energy · Current</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">Solar + Wind</span>
+        </div>
+        <div class="en-body">
+          <div class="en-big">
+            <span class="val">404</span><span class="u">kW</span>
+            <span class="lbl">Total Renewable</span>
+          </div>
+          <div class="en-row">
+            <div>
+              <div class="sd-label">Solar Output</div>
+              <div class="bar solar"><i style="width: 72%"></i></div>
+            </div>
+            <div class="sd-value">248<span class="u">kW</span></div>
+          </div>
+          <div class="en-row">
+            <div>
+              <div class="sd-label">Wind Output</div>
+              <div class="bar wind"><i style="width: 46%"></i></div>
+            </div>
+            <div class="sd-value">156<span class="u">kW</span></div>
+          </div>
+          <div class="en-balance">
+            <span>City Balance</span>
+            <b>+112 kW · Surplus</b>
+          </div>
+          <div style="font-family:var(--mono); font-size:10px; color:var(--text-3); letter-spacing:0.12em; text-transform:uppercase; display:flex; justify-content:space-between; padding-top:4px; border-top:1px dashed var(--line-soft);">
+            <span>Payload ts <b style="color:var(--text-1);font-weight:500">14:32:06</b></span>
+            <span>Δ demand <b style="color:var(--accent-lime);font-weight:500">−292 kW</b></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Buildings current -->
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">05</span>
+          <span class="label">Buildings · Current</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">8 nodes</span>
+        </div>
+        <div class="bld-state">
+          <div class="row-head">
+            <span class="dem">251.5<span class="u">kW</span></span>
+            <span class="dem-lbl">Total Demand · 8 Buildings</span>
+          </div>
+          <div class="top-list">
+            <div class="top-row">
+              <span class="rk t">1</span>
+              <span class="bn">Factory 01<span class="id">factory-01 · industrial</span></span>
+              <span class="bar-wrap"><span class="bar2"><i style="width: 100%"></i></span></span>
+              <span class="bv">84.2<span class="u">kW</span></span>
+            </div>
+            <div class="top-row">
+              <span class="rk t">2</span>
+              <span class="bn">Office 01<span class="id">office-01 · office</span></span>
+              <span class="bar-wrap"><span class="bar2"><i style="width: 56%"></i></span></span>
+              <span class="bv">46.8<span class="u">kW</span></span>
+            </div>
+            <div class="top-row">
+              <span class="rk t">3</span>
+              <span class="bn">Utility 01<span class="id">utility-01 · utility</span></span>
+              <span class="bar-wrap"><span class="bar2"><i style="width: 46%"></i></span></span>
+              <span class="bv">38.4<span class="u">kW</span></span>
+            </div>
+            <div class="top-row">
+              <span class="rk">4</span>
+              <span class="bn">Apartment 01<span class="id">apartment-01 · apartment</span></span>
+              <span class="bar-wrap"><span class="bar2" style="opacity:0.6"><i style="width: 34%"></i></span></span>
+              <span class="bv">28.6<span class="u">kW</span></span>
+            </div>
+            <div class="top-row">
+              <span class="rk">5</span>
+              <span class="bn">Retail 01<span class="id">retail-01 · retail</span></span>
+              <span class="bar-wrap"><span class="bar2" style="opacity:0.6"><i style="width: 26%"></i></span></span>
+              <span class="bv">22.1<span class="u">kW</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TRENDS -->
+    <section style="margin-bottom:14px">
+      <div class="panel-hd" style="border:1px solid var(--line); border-bottom:none; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius); background: oklch(0.2 0.012 230 / 0.6);">
+        <span class="hd-idx">06</span>
+        <span class="label">History · Recent Trends</span>
+        <span class="hd-sep"></span>
+        <span class="hd-meta">Broker buffer · last 60 min · 1 min bins</span>
+      </div>
+      <div class="trends" style="border:1px solid var(--line); border-top:none; border-radius: 0 0 var(--radius) var(--radius); padding: 14px; background: oklch(0.2 0.012 230 / 0.4);">
+
+        <!-- Weather trend -->
+        <section class="panel trend">
+          <div class="trend-head">
+            <div class="t">Weather · Temperature <span class="sub">°C</span></div>
+            <div class="delta pos">▲ +0.8°</div>
+          </div>
+          <div class="trend-values">
+            <span>Current<b>19.0 °C</b></span>
+            <span>Min<b>17.4 °C</b></span>
+            <span>Range<b>2.4 °C</b></span>
+            <span>Max<b>19.8 °C</b></span>
+          </div>
+          <div class="trend-chart">
+            <svg viewBox="0 0 600 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tWx" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.78 0.12 190)" stop-opacity="0.4"/>
+                  <stop offset="1" stop-color="oklch(0.78 0.12 190)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="oklch(0.3 0.02 220 / 0.3)" stroke-dasharray="2 4">
+                <line x1="0" y1="30" x2="600" y2="30"/>
+                <line x1="0" y1="60" x2="600" y2="60"/>
+                <line x1="0" y1="90" x2="600" y2="90"/>
+              </g>
+              <path d="M0,80 L30,78 L60,74 L90,70 L120,66 L150,68 L180,62 L210,58 L240,60 L270,54 L300,50 L330,52 L360,46 L390,42 L420,44 L450,40 L480,38 L510,36 L540,34 L570,32 L600,30 L600,120 L0,120 Z" fill="url(#tWx)"/>
+              <polyline fill="none" stroke="oklch(0.78 0.12 190)" stroke-width="1.4"
+                points="0,80 30,78 60,74 90,70 120,66 150,68 180,62 210,58 240,60 270,54 300,50 330,52 360,46 390,42 420,44 450,40 480,38 510,36 540,34 570,32 600,30"/>
+              <circle cx="600" cy="30" r="3" fill="oklch(0.78 0.12 190)"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><span>T-60m</span><span>Now</span></div>
+        </section>
+
+        <!-- Renewable trend -->
+        <section class="panel trend">
+          <div class="trend-head">
+            <div class="t">Renewable Output <span class="sub">kW · solar + wind</span></div>
+            <div class="delta pos">▲ +6.2%</div>
+          </div>
+          <div class="trend-values">
+            <span>Current<b>404 kW</b></span>
+            <span>Min<b>352 kW</b></span>
+            <span>Avg<b>386 kW</b></span>
+            <span>Max<b>422 kW</b></span>
+          </div>
+          <div class="trend-chart">
+            <svg viewBox="0 0 600 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tEnS" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.82 0.14 75)" stop-opacity="0.45"/>
+                  <stop offset="1" stop-color="oklch(0.82 0.14 75)" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="tEnW" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.78 0.12 190)" stop-opacity="0.45"/>
+                  <stop offset="1" stop-color="oklch(0.78 0.12 190)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="oklch(0.3 0.02 220 / 0.3)" stroke-dasharray="2 4">
+                <line x1="0" y1="30" x2="600" y2="30"/>
+                <line x1="0" y1="60" x2="600" y2="60"/>
+                <line x1="0" y1="90" x2="600" y2="90"/>
+              </g>
+              <!-- solar -->
+              <path d="M0,70 L30,66 L60,60 L90,58 L120,52 L150,54 L180,48 L210,44 L240,46 L270,40 L300,38 L330,42 L360,36 L390,34 L420,32 L450,36 L480,30 L510,28 L540,30 L570,26 L600,28 L600,120 L0,120 Z" fill="url(#tEnS)"/>
+              <polyline fill="none" stroke="oklch(0.82 0.14 75)" stroke-width="1.3"
+                points="0,70 30,66 60,60 90,58 120,52 150,54 180,48 210,44 240,46 270,40 300,38 330,42 360,36 390,34 420,32 450,36 480,30 510,28 540,30 570,26 600,28"/>
+              <!-- wind -->
+              <path d="M0,96 L30,94 L60,90 L90,92 L120,86 L150,88 L180,84 L210,82 L240,86 L270,80 L300,78 L330,82 L360,76 L390,78 L420,80 L450,74 L480,76 L510,72 L540,74 L570,70 L600,72 L600,120 L0,120 Z" fill="url(#tEnW)" fill-opacity="0.85"/>
+              <polyline fill="none" stroke="oklch(0.78 0.12 190)" stroke-width="1.3"
+                points="0,96 30,94 60,90 90,92 120,86 150,88 180,84 210,82 240,86 270,80 300,78 330,82 360,76 390,78 420,80 450,74 480,76 510,72 540,74 570,70 600,72"/>
+              <circle cx="600" cy="28" r="3" fill="oklch(0.82 0.14 75)"/>
+              <circle cx="600" cy="72" r="3" fill="oklch(0.78 0.12 190)"/>
+            </svg>
+          </div>
+          <div class="trend-foot">
+            <span><span style="color:var(--accent-amber)">Solar</span> · <span style="color:var(--accent-teal)">Wind</span></span>
+            <span>T-60m → Now</span>
+          </div>
+        </section>
+
+        <!-- Building demand trend -->
+        <section class="panel trend">
+          <div class="trend-head">
+            <div class="t">Building Demand <span class="sub">kW · total</span></div>
+            <div class="delta neg">▲ +2.1%</div>
+          </div>
+          <div class="trend-values">
+            <span>Current<b>251.5 kW</b></span>
+            <span>Min<b>228 kW</b></span>
+            <span>Avg<b>244 kW</b></span>
+            <span>Max<b>258 kW</b></span>
+          </div>
+          <div class="trend-chart">
+            <svg viewBox="0 0 600 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tBld" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="oklch(0.82 0.14 75)" stop-opacity="0.4"/>
+                  <stop offset="1" stop-color="oklch(0.82 0.14 75)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="oklch(0.3 0.02 220 / 0.3)" stroke-dasharray="2 4">
+                <line x1="0" y1="30" x2="600" y2="30"/>
+                <line x1="0" y1="60" x2="600" y2="60"/>
+                <line x1="0" y1="90" x2="600" y2="90"/>
+              </g>
+              <!-- demand bars aggregated -->
+              <g fill="oklch(0.82 0.14 75 / 0.6)">
+                <rect x="4"   y="60" width="16" height="60"/>
+                <rect x="24"  y="62" width="16" height="58"/>
+                <rect x="44"  y="58" width="16" height="62"/>
+                <rect x="64"  y="54" width="16" height="66"/>
+                <rect x="84"  y="56" width="16" height="64"/>
+                <rect x="104" y="52" width="16" height="68"/>
+                <rect x="124" y="50" width="16" height="70"/>
+                <rect x="144" y="54" width="16" height="66"/>
+                <rect x="164" y="52" width="16" height="68"/>
+                <rect x="184" y="48" width="16" height="72"/>
+                <rect x="204" y="46" width="16" height="74"/>
+                <rect x="224" y="50" width="16" height="70"/>
+                <rect x="244" y="44" width="16" height="76"/>
+                <rect x="264" y="42" width="16" height="78"/>
+                <rect x="284" y="46" width="16" height="74"/>
+                <rect x="304" y="40" width="16" height="80"/>
+                <rect x="324" y="44" width="16" height="76"/>
+                <rect x="344" y="38" width="16" height="82"/>
+                <rect x="364" y="42" width="16" height="78"/>
+                <rect x="384" y="36" width="16" height="84"/>
+                <rect x="404" y="40" width="16" height="80"/>
+                <rect x="424" y="38" width="16" height="82"/>
+                <rect x="444" y="34" width="16" height="86"/>
+                <rect x="464" y="38" width="16" height="82"/>
+                <rect x="484" y="32" width="16" height="88"/>
+                <rect x="504" y="36" width="16" height="84"/>
+                <rect x="524" y="30" width="16" height="90"/>
+                <rect x="544" y="34" width="16" height="86"/>
+                <rect x="564" y="32" width="16" height="88"/>
+                <rect x="584" y="30" width="16" height="90" fill="oklch(0.82 0.14 75 / 0.95)"/>
+              </g>
+              <polyline fill="none" stroke="oklch(0.82 0.14 75)" stroke-width="1.4"
+                points="12,60 32,62 52,58 72,54 92,56 112,52 132,50 152,54 172,52 192,48 212,46 232,50 252,44 272,42 292,46 312,40 332,44 352,38 372,42 392,36 412,40 432,38 452,34 472,38 492,32 512,36 532,30 552,34 572,32 592,30"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><span>T-60m</span><span>Now · Factory 01 leading</span></div>
+        </section>
+
+      </div>
+    </section>
+
+    <!-- OBSERVABILITY: per-flow stats + events -->
+    <div class="obs-row">
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">07</span>
+          <span class="label">Broker Stats · Per Flow</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">Buffer window</span>
+        </div>
+        <div class="stats-body">
+          <table class="stats">
+            <thead>
+              <tr>
+                <th>Flow</th>
+                <th>Topic</th>
+                <th>State</th>
+                <th class="num">Records</th>
+                <th class="num">Oldest</th>
+                <th class="num">Latest</th>
+                <th class="num">Freshness</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="flow-cell"><span class="sw wx"></span>Weather</span></td>
+                <td>cityverse/weather/amsterdam</td>
+                <td><span class="pill-s"><span class="d"></span>OK</span></td>
+                <td class="num">4 862</td>
+                <td class="num">13:32:05</td>
+                <td class="num">14:32:05</td>
+                <td class="num" style="color:var(--accent-lime)">2 s</td>
+              </tr>
+              <tr>
+                <td><span class="flow-cell"><span class="sw en"></span>Energy</span></td>
+                <td>cityverse/energy/generation</td>
+                <td><span class="pill-s"><span class="d"></span>OK</span></td>
+                <td class="num">8 214</td>
+                <td class="num">13:32:06</td>
+                <td class="num">14:32:06</td>
+                <td class="num" style="color:var(--accent-lime)">1 s</td>
+              </tr>
+              <tr>
+                <td><span class="flow-cell"><span class="sw bld"></span>Buildings</span></td>
+                <td>cityverse/buildings/+/demand</td>
+                <td><span class="pill-s warn"><span class="d"></span>Delayed</span></td>
+                <td class="num">11 110</td>
+                <td class="num">13:31:58</td>
+                <td class="num">14:31:58</td>
+                <td class="num" style="color:var(--accent-amber)">9 s</td>
+              </tr>
+              <tr>
+                <td><span class="flow-cell" style="color:var(--text-2)"><span class="sw" style="background:var(--text-2)"></span>City · Derived</span></td>
+                <td>cityverse/city/summary</td>
+                <td><span class="pill-s"><span class="d"></span>OK</span></td>
+                <td class="num">1 204</td>
+                <td class="num">13:32:05</td>
+                <td class="num">14:32:05</td>
+                <td class="num" style="color:var(--accent-lime)">2 s</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-hd">
+          <span class="hd-idx">08</span>
+          <span class="label">Broker Events</span>
+          <span class="hd-sep"></span>
+          <span class="hd-meta">Recent · live tail</span>
+        </div>
+        <div class="events-body">
+          <div class="event"><span class="ts">14:32:06</span><span class="sev info">Ingest</span><span class="msg">energy/generation → <span class="code">{ solar: 248, wind: 156 }</span></span></div>
+          <div class="event"><span class="ts">14:32:05</span><span class="sev info">Ingest</span><span class="msg">weather/amsterdam → <span class="code">{ tempC: 19.0, cloud: 42 }</span></span></div>
+          <div class="event"><span class="ts">14:31:59</span><span class="sev warn">Freshness</span><span class="msg">buildings flow exceeded 8s threshold · <span class="code">9s</span></span></div>
+          <div class="event"><span class="ts">14:31:58</span><span class="sev info">Ingest</span><span class="msg">buildings/factory-01 → <span class="code">{ demand: 84.2 }</span></span></div>
+          <div class="event"><span class="ts">14:31:50</span><span class="sev ok">Recover</span><span class="msg">weather flow ingest resumed · <span class="code">gap 0s</span></span></div>
+          <div class="event"><span class="ts">14:31:45</span><span class="sev info">Summary</span><span class="msg">city/summary emitted · <span class="code">demand 251.5 kW · balance +112 kW</span></span></div>
+          <div class="event"><span class="ts">14:31:32</span><span class="sev ok">Ingest</span><span class="msg">buildings batch · <span class="code">8 / 8 buildings updated</span></span></div>
+          <div class="event"><span class="ts">14:30:12</span><span class="sev info">Subscribe</span><span class="msg">downstream consumer attached · <span class="code">unity-viewer-01</span></span></div>
+          <div class="event"><span class="ts">14:28:04</span><span class="sev warn">Latency</span><span class="msg">buildings ingest latency p95 · <span class="code">1.42 s</span></span></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar">
+      <span>Broker <b>CONNECTED</b></span>
+      <span class="sep"></span>
+      <span>Flows <b>3 / 3</b></span>
+      <span class="sep"></span>
+      <span>Buffer <b>60 min · 1s res</b></span>
+      <span class="sep"></span>
+      <span>Consumers <b>2</b></span>
+      <span class="push"></span>
+      <span>Build <b>MVP 0.4</b></span>
+      <span class="sep"></span>
+      <span>Node <b>broker-01</b></span>
+    </div>
+  </div>
+
+  <!-- TWEAKS -->
+  <div id="tweaks">
+    <h4>Tweaks</h4>
+    <div class="tw-row">
+      <div class="tw-label">Accent</div>
+      <div class="swatches" id="tw-accent">
+        <span class="sw a-teal on" data-accent="teal"></span>
+        <span class="sw a-lime" data-accent="lime"></span>
+        <span class="sw a-amber" data-accent="amber"></span>
+        <span class="sw a-violet" data-accent="violet"></span>
+      </div>
+    </div>
+    <div class="tw-row">
+      <div class="tw-label">Density</div>
+      <div class="seg-tw" id="tw-density">
+        <button class="on" data-density="normal">Normal</button>
+        <button data-density="dense">Dense</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "teal",
+    "density": "normal"
+  }/*EDITMODE-END*/;
+
+  const accentMap = { teal:'var(--accent-teal)', lime:'var(--accent-lime)', amber:'var(--accent-amber)', violet:'var(--accent-violet)' };
+  function applyAccent(n){ const v=accentMap[n]; if(!v) return;
+    document.documentElement.style.setProperty('--accent', v);
+    document.querySelectorAll('#tw-accent .sw').forEach(el => el.classList.toggle('on', el.dataset.accent===n));
+  }
+  function applyDensity(n){ document.body.setAttribute('data-density', n);
+    document.querySelectorAll('#tw-density button').forEach(b => b.classList.toggle('on', b.dataset.density===n));
+  }
+  applyAccent(TWEAK_DEFAULTS.accent);
+  applyDensity(TWEAK_DEFAULTS.density);
+  document.getElementById('tw-accent').addEventListener('click', e => {
+    const s = e.target.closest('.sw'); if (!s) return;
+    applyAccent(s.dataset.accent);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits:{accent:s.dataset.accent}}, '*');
+  });
+  document.getElementById('tw-density').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    applyDensity(b.dataset.density);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits:{density:b.dataset.density}}, '*');
+  });
+  window.addEventListener('message', e => {
+    const d = e.data||{};
+    if (d.type==='__activate_edit_mode') document.getElementById('tweaks').classList.add('on');
+    if (d.type==='__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('on');
+  });
+  window.parent.postMessage({type:'__edit_mode_available'}, '*');
+</script>
+</body>
+</html>

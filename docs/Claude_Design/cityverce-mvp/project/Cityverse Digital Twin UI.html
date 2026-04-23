@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Cityverse — Digital Twin UI System</title>
+<meta name="viewport" content="width=1600"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; }
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="dt-tokens.jsx"></script>
+<script type="text/babel" src="dt-expert.jsx"></script>
+<script type="text/babel" src="dt-kids.jsx"></script>
+<script type="text/babel" src="dt-spatial.jsx"></script>
+<script type="text/babel" src="dt-reference.jsx"></script>
+<script type="text/babel" src="dt-alert.jsx"></script>
+<script type="text/babel" src="wx-icons.jsx"></script>
+<script type="text/babel" src="wx-expert.jsx"></script>
+<script type="text/babel" src="wx-kids.jsx"></script>
+<script type="text/babel" src="wx-reference.jsx"></script>
+<script type="text/babel" src="pp-icons.jsx"></script>
+<script type="text/babel" src="pp-expert.jsx"></script>
+<script type="text/babel" src="pp-kids.jsx"></script>
+<script type="text/babel" src="pp-reference.jsx"></script>
+
+<script type="text/babel">
+  const pick = (id) => BUILDINGS.find(x => x.id === id);
+
+  function ARScene({ mode = 'expert' }) {
+    const Label = mode === 'kids' ? ARKidsLabel : ARAnchoredLabel;
+    const items = mode === 'kids'
+      ? [['factory-01', 60, 60], ['office-01', 420, 150], ['school-01', 90, 310]]
+      : [['factory-01', 60, 60], ['office-01', 420, 150], ['school-01', 90, 310]];
+    return (
+      <div style={{
+        width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: 10,
+        background: mode === 'kids'
+          ? 'linear-gradient(180deg, #FFE2B8 0%, #FFCE92 45%, #C8E6C9 100%)'
+          : 'linear-gradient(180deg, oklch(0.28 0.04 235) 0%, oklch(0.2 0.02 230) 70%)'
+      }}>
+        {/* fake city blocks */}
+        <svg viewBox="0 0 800 520" preserveAspectRatio="none" style={{ position:'absolute', inset: 0, width:'100%', height:'100%', opacity: mode==='kids'? 0.7 : 0.5 }}>
+          <rect x="60" y="260" width="120" height="180" fill={mode==='kids'? '#E0A878' : 'oklch(0.3 0.02 230)'}/>
+          <rect x="200" y="220" width="160" height="220" fill={mode==='kids'? '#C58B5F' : 'oklch(0.25 0.02 230)'}/>
+          <rect x="380" y="190" width="140" height="250" fill={mode==='kids'? '#D6996C' : 'oklch(0.28 0.02 230)'}/>
+          <rect x="540" y="250" width="180" height="190" fill={mode==='kids'? '#B87F54' : 'oklch(0.23 0.02 230)'}/>
+          <line x1="0" y1="440" x2="800" y2="440" stroke={mode==='kids'? '#8B6436' : 'oklch(0.18 0.01 230)'} strokeWidth="4"/>
+        </svg>
+        {items.map(([id, l, t]) => (
+          <Label key={id} b={pick(id)} style={{ position:'absolute', left: l, top: t }}/>
+        ))}
+      </div>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection id="brief" title="Cityverse Digital Twin — UI System" subtitle="Two-mode building UI for screen, VR and AR. One data model, two voices.">
+          <DCArtboard id="direction" label="Design direction" width={920} height={540}>
+            <BriefStatement/>
+          </DCArtboard>
+          <DCArtboard id="spatial" label="Spatial surface map" width={620} height={440}>
+            <SpatialMap/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="expert" title="Expert Mode" subtitle="Operator-grade. IBM Plex, cool charcoal, tabular numbers, status accents.">
+          <DCArtboard id="ex-float" label="Floating label · world-space" width={320} height={180}>
+            <div style={{ width:'100%', height:'100%', background:'oklch(0.15 0.01 230)', display:'grid', placeItems:'center', padding: 16 }}>
+              <ExFloatLabel b={pick('office-01')} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="ex-summary" label="Summary card · HUD" width={320} height={420}>
+            <ExSummaryCard b={pick('factory-01')}/>
+          </DCArtboard>
+          <DCArtboard id="ex-summary-2" label="Summary card · low-load" width={320} height={420}>
+            <ExSummaryCard b={pick('villa-a')}/>
+          </DCArtboard>
+          <DCArtboard id="ex-detail" label="Detail panel · Inspector" width={440} height={560}>
+            <ExDetailPanel b={pick('office-01')}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="kids" title="Kids Mode" subtitle="Friendly, playful, educational. Baloo 2, warm surface, shape + emoji status.">
+          <DCArtboard id="k-float" label="Floating label · world-space" width={320} height={180}>
+            <div style={{ width:'100%', height:'100%', background: DT.kids.bg0, display:'grid', placeItems:'center', padding: 16 }}>
+              <KidsFloatLabel b={pick('office-01')} />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="k-summary" label="Summary card · HUD" width={320} height={420}>
+            <KidsSummaryCard b={pick('factory-01')}/>
+          </DCArtboard>
+          <DCArtboard id="k-summary-2" label="Summary card · quiet building" width={320} height={420}>
+            <KidsSummaryCard b={pick('villa-a')}/>
+          </DCArtboard>
+          <DCArtboard id="k-detail" label="Detail panel · friendly" width={440} height={560}>
+            <KidsDetailPanel b={pick('office-01')}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="alerts" title="Alert State" subtitle="Both modes honor the same ALERT code, with very different voices.">
+          <DCArtboard id="ex-alert" label="Expert · alert card" width={360} height={420}>
+            <ExAlertCard b={pick('factory-01')} reason="Demand exceeds base by 24%. Weather factor 1.34× and near-peak occupancy." severity="warn"/>
+          </DCArtboard>
+          <DCArtboard id="ex-alert-crit" label="Expert · critical card" width={360} height={420}>
+            <ExAlertCard b={pick('office-01')} reason="Sustained overload · HVAC reporting stress. Investigate." severity="crit"/>
+          </DCArtboard>
+          <DCArtboard id="k-alert" label="Kids · friendly alert" width={360} height={420}>
+            <KidsAlertCard b={pick('factory-01')} reason="The Big Factory is using lots of power. It might be very busy inside today!"/>
+          </DCArtboard>
+          <DCArtboard id="ar-alert" label="AR · critical anchor pill" width={420} height={180}>
+            <div style={{ width:'100%', height:'100%', background:'linear-gradient(180deg, oklch(0.22 0.02 230), oklch(0.16 0.01 230))', display:'grid', placeItems:'center', padding: 16, borderRadius: 10 }}>
+              <ExAlertPill b={pick('office-01')} />
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="spatial-ui" title="VR & AR" subtitle="Same information architecture, re-scaled for head-worn and anchored surfaces.">
+          <DCArtboard id="vr-ex" label="VR panel · Expert" width={800} height={520}>
+            <VRBuildingPanel b={pick('factory-01')}/>
+          </DCArtboard>
+          <DCArtboard id="vr-kids" label="VR panel · Kids" width={800} height={520}>
+            <VRKidsPanel b={pick('school-01')}/>
+          </DCArtboard>
+          <DCArtboard id="ar-ex" label="AR scene · Expert anchors" width={800} height={520}>
+            <ARScene mode="expert"/>
+          </DCArtboard>
+          <DCArtboard id="ar-kids" label="AR scene · Kids anchors" width={800} height={520}>
+            <ARScene mode="kids"/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="weather-ex" title="Weather · Expert Mode" subtitle="Operations-grade readout. Same IBM Plex family, same semantic colors, ops-console tone.">
+          <DCArtboard id="wx-ex-badge" label="Compact badge · HUD / AR" width={360} height={120}>
+            <div style={{ width:'100%', height:'100%', background:'oklch(0.15 0.01 230)', display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <ExWxBadge wx={WX}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-ex-badge-2" label="Badge · stormy condition" width={360} height={120}>
+            <div style={{ width:'100%', height:'100%', background:'oklch(0.15 0.01 230)', display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <ExWxBadge wx={{ ...WX, condition: 'storm', temperature: 17.2, windSpeed: 38.4, windCardinal: 'NW' }}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-ex-summary" label="Summary card · HUD" width={360} height={320}>
+            <ExWxSummary wx={WX}/>
+          </DCArtboard>
+          <DCArtboard id="wx-ex-summary-2" label="Summary · clear night" width={360} height={320}>
+            <ExWxSummary wx={{ ...WX, condition: 'clearNight', temperature: 11.6, feelsLike: 9.4, windSpeed: 6, cloudCover: 5, isDaytime: false, season: 'Autumn' }}/>
+          </DCArtboard>
+          <DCArtboard id="wx-ex-detail" label="Detail panel · Inspector" width={460} height={560}>
+            <ExWxDetail wx={WX}/>
+          </DCArtboard>
+          <DCArtboard id="wx-ex-detail-storm" label="Detail · storm" width={460} height={560}>
+            <ExWxDetail wx={{ ...WX, condition: 'storm', temperature: 17.2, feelsLike: 14.8, humidity: 84, windSpeed: 38.4, windDir: 315, windCardinal: 'NW', cloudCover: 96, precipitation: 6.4, pressure: 998, season: 'Autumn' }}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="weather-kids" title="Weather · Kids Mode" subtitle="Plain language for children. Baloo 2, warm fills, named bands for wind and rain.">
+          <DCArtboard id="wx-k-badge" label="Compact badge" width={360} height={120}>
+            <div style={{ width:'100%', height:'100%', background: DT.kids.bg0, display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <KidsWxBadge wx={WX}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-k-badge-2" label="Badge · rainy" width={360} height={120}>
+            <div style={{ width:'100%', height:'100%', background: DT.kids.bg0, display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <KidsWxBadge wx={{ ...WX, condition: 'rain', temperature: 12.1, precipitation: 2.2 }}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-k-summary" label="Summary card" width={360} height={320}>
+            <KidsWxSummary wx={WX}/>
+          </DCArtboard>
+          <DCArtboard id="wx-k-summary-2" label="Summary · snowy" width={360} height={320}>
+            <KidsWxSummary wx={{ ...WX, condition: 'snow', temperature: -2.4, feelsLike: -5.1, windSpeed: 12, cloudCover: 88, precipitation: 1.2, season: 'Winter' }}/>
+          </DCArtboard>
+          <DCArtboard id="wx-k-detail" label="Detail panel" width={460} height={560}>
+            <KidsWxDetail wx={WX}/>
+          </DCArtboard>
+          <DCArtboard id="wx-k-detail-sunny" label="Detail · hot sunny day" width={460} height={560}>
+            <KidsWxDetail wx={{ ...WX, condition: 'clear', temperature: 31.2, feelsLike: 33.6, humidity: 42, windSpeed: 4, cloudCover: 8, precipitation: 0, season: 'Summer' }}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="weather-spatial" title="Weather · VR & AR" subtitle="The same three forms re-scaled for spatial UI. World-space pill, wrist summary, pinned slate.">
+          <DCArtboard id="wx-vr-ex" label="VR · Expert slate" width={760} height={480}>
+            <div style={{ width:'100%', height:'100%', background:'radial-gradient(circle at 30% 20%, oklch(0.3 0.04 235), oklch(0.14 0.01 230))', display:'grid', placeItems:'center', padding: 40 }}>
+              <div style={{ width: 520, height: 380, filter:'drop-shadow(0 20px 60px rgba(0,0,0,0.55))', transform:'perspective(1400px) rotateY(-8deg)' }}>
+                <ExWxDetail wx={WX}/>
+              </div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-vr-kids" label="VR · Kids slate" width={760} height={480}>
+            <div style={{ width:'100%', height:'100%', background:'linear-gradient(180deg, #FFDDB0, #C8E6C9)', display:'grid', placeItems:'center', padding: 40 }}>
+              <div style={{ width: 520, height: 380, filter:'drop-shadow(0 18px 48px rgba(120,80,30,0.3))', transform:'perspective(1400px) rotateY(-8deg)' }}>
+                <KidsWxDetail wx={WX}/>
+              </div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-ar-ex" label="AR · Expert world badge" width={760} height={380}>
+            <div style={{ width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: 10,
+              background:'linear-gradient(180deg, oklch(0.28 0.04 235) 0%, oklch(0.2 0.02 230) 70%)' }}>
+              <svg viewBox="0 0 800 380" preserveAspectRatio="none" style={{ position:'absolute', inset: 0, width:'100%', height:'100%', opacity: 0.5 }}>
+                <rect x="60" y="200" width="120" height="180" fill="oklch(0.3 0.02 230)"/>
+                <rect x="200" y="160" width="160" height="220" fill="oklch(0.25 0.02 230)"/>
+                <rect x="380" y="130" width="140" height="250" fill="oklch(0.28 0.02 230)"/>
+                <rect x="540" y="190" width="180" height="190" fill="oklch(0.23 0.02 230)"/>
+              </svg>
+              <div style={{ position:'absolute', left: '50%', top: 40, transform:'translateX(-50%)' }}>
+                <ExWxBadge wx={WX}/>
+              </div>
+              <div style={{ position:'absolute', left: 80, top: 150 }}>
+                <ExWxBadge wx={{ ...WX, condition: 'partlyCloudy' }} compactLabel/>
+              </div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="wx-ar-kids" label="AR · Kids world badge" width={760} height={380}>
+            <div style={{ width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: 10,
+              background:'linear-gradient(180deg, #FFE2B8 0%, #FFCE92 45%, #C8E6C9 100%)' }}>
+              <svg viewBox="0 0 800 380" preserveAspectRatio="none" style={{ position:'absolute', inset: 0, width:'100%', height:'100%', opacity: 0.65 }}>
+                <rect x="60" y="200" width="120" height="180" fill="#E0A878"/>
+                <rect x="200" y="160" width="160" height="220" fill="#C58B5F"/>
+                <rect x="380" y="130" width="140" height="250" fill="#D6996C"/>
+                <rect x="540" y="190" width="180" height="190" fill="#B87F54"/>
+              </svg>
+              <div style={{ position:'absolute', left: '50%', top: 40, transform:'translateX(-50%)' }}>
+                <KidsWxBadge wx={WX}/>
+              </div>
+              <div style={{ position:'absolute', left: 80, top: 150 }}>
+                <KidsWxBadge wx={{ ...WX, condition: 'rain', temperature: 13 }}/>
+              </div>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="weather-system" title="Weather · System Reference" subtitle="Condition vocabulary, palette, rules, and Unity binding notes.">
+          <DCArtboard id="wx-ref" label="Condition vocabulary + palette + rules" width={920} height={540}>
+            <WxReferenceBoard/>
+          </DCArtboard>
+          <DCArtboard id="wx-unity" label="Unity implementation" width={920} height={440}>
+            <WxUnityNotes/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="pp-ex" title="Power Plants · Expert Mode" subtitle="Utility-grade ops card. Output is hero, utilization supports, status lives in a fixed pill.">
+          <DCArtboard id="pp-ex-label-solar" label="World label · Solar online" width={380} height={110}>
+            <div style={{ width:'100%', height:'100%', background:'oklch(0.15 0.01 230)', display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <ExPpLabel p={PLANTS[0]}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-label-oil" label="World label · Oil offline" width={380} height={110}>
+            <div style={{ width:'100%', height:'100%', background:'oklch(0.15 0.01 230)', display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <ExPpLabel p={PLANTS[3]}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-sum-solar" label="Summary · Solar" width={340} height={360}>
+            <ExPpSummary p={PLANTS[0]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-sum-wind" label="Summary · Wind" width={340} height={360}>
+            <ExPpSummary p={PLANTS[1]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-sum-gas" label="Summary · Gas" width={340} height={360}>
+            <ExPpSummary p={PLANTS[2]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-sum-oil" label="Summary · Oil · Offline" width={340} height={360}>
+            <ExPpSummary p={PLANTS[3]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-detail-nuc" label="Detail · Nuclear" width={460} height={580}>
+            <ExPpDetail p={PLANTS[4]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-ex-detail-bat" label="Detail · Battery / BESS" width={460} height={580}>
+            <ExPpDetail p={PLANTS[5]}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="pp-kids" title="Power Plants · Kids Mode" subtitle="Plain language: 'sun power', 'how much it's making', 'very clean'. Same data, softer voice.">
+          <DCArtboard id="pp-k-label-solar" label="World label · Sun power" width={380} height={110}>
+            <div style={{ width:'100%', height:'100%', background: DT.kids.bg0, display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <KidsPpLabel p={PLANTS[0]}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-k-label-oil" label="World label · Oil off" width={380} height={110}>
+            <div style={{ width:'100%', height:'100%', background: DT.kids.bg0, display:'grid', placeItems:'center', padding: 14, borderRadius: 10 }}>
+              <KidsPpLabel p={PLANTS[3]}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-k-sum-solar" label="Summary · Sunny Field" width={340} height={360}>
+            <KidsPpSummary p={PLANTS[0]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-k-sum-wind" label="Summary · Windy Hill" width={340} height={360}>
+            <KidsPpSummary p={PLANTS[1]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-k-sum-gas" label="Summary · Gas Plant" width={340} height={360}>
+            <KidsPpSummary p={PLANTS[2]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-k-sum-oil" label="Summary · Oil Off" width={340} height={360}>
+            <KidsPpSummary p={PLANTS[3]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-k-detail-nuc" label="Detail · Nuclear Helper" width={460} height={580}>
+            <KidsPpDetail p={PLANTS[4]}/>
+          </DCArtboard>
+          <DCArtboard id="pp-k-detail-bat" label="Detail · Big Battery" width={460} height={580}>
+            <KidsPpDetail p={PLANTS[5]}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="pp-spatial" title="Power Plants · VR & AR" subtitle="Wrist slate for focused inspection, world badges for ambient awareness.">
+          <DCArtboard id="pp-vr-ex" label="VR · Expert slate" width={760} height={480}>
+            <div style={{ width:'100%', height:'100%', background:'radial-gradient(circle at 30% 20%, oklch(0.3 0.04 235), oklch(0.14 0.01 230))', display:'grid', placeItems:'center', padding: 40 }}>
+              <div style={{ width: 520, height: 400, filter:'drop-shadow(0 20px 60px rgba(0,0,0,0.55))', transform:'perspective(1400px) rotateY(-8deg)' }}>
+                <ExPpDetail p={PLANTS[4]}/>
+              </div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-vr-kids" label="VR · Kids slate" width={760} height={480}>
+            <div style={{ width:'100%', height:'100%', background:'linear-gradient(180deg, #FFDDB0, #C8E6C9)', display:'grid', placeItems:'center', padding: 40 }}>
+              <div style={{ width: 520, height: 400, filter:'drop-shadow(0 18px 48px rgba(120,80,30,0.3))', transform:'perspective(1400px) rotateY(-8deg)' }}>
+                <KidsPpDetail p={PLANTS[0]}/>
+              </div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-ar-ex" label="AR · Expert anchored labels" width={760} height={420}>
+            <div style={{ width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: 10,
+              background:'linear-gradient(180deg, oklch(0.28 0.04 235) 0%, oklch(0.2 0.02 230) 70%)' }}>
+              <svg viewBox="0 0 760 420" preserveAspectRatio="none" style={{ position:'absolute', inset: 0, width:'100%', height:'100%', opacity: 0.45 }}>
+                <rect x="40" y="280" width="140" height="120" fill="oklch(0.3 0.02 230)"/>
+                <rect x="300" y="240" width="160" height="160" fill="oklch(0.28 0.02 230)"/>
+                <rect x="560" y="270" width="160" height="130" fill="oklch(0.26 0.02 230)"/>
+                <line x1="0" y1="400" x2="760" y2="400" stroke="oklch(0.18 0.01 230)" strokeWidth="4"/>
+              </svg>
+              <div style={{ position:'absolute', left: 40, top: 40 }}><ExPpLabel p={PLANTS[0]}/></div>
+              <div style={{ position:'absolute', left: 300, top: 100 }}><ExPpLabel p={PLANTS[1]}/></div>
+              <div style={{ position:'absolute', left: 530, top: 60 }}><ExPpLabel p={PLANTS[2]}/></div>
+              <div style={{ position:'absolute', left: 420, top: 170 }}><ExPpLabel p={PLANTS[3]}/></div>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="pp-ar-kids" label="AR · Kids anchored labels" width={760} height={420}>
+            <div style={{ width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: 10,
+              background:'linear-gradient(180deg, #FFE2B8 0%, #FFCE92 45%, #C8E6C9 100%)' }}>
+              <svg viewBox="0 0 760 420" preserveAspectRatio="none" style={{ position:'absolute', inset: 0, width:'100%', height:'100%', opacity: 0.6 }}>
+                <rect x="40" y="280" width="140" height="120" fill="#E0A878"/>
+                <rect x="300" y="240" width="160" height="160" fill="#D6996C"/>
+                <rect x="560" y="270" width="160" height="130" fill="#C58B5F"/>
+              </svg>
+              <div style={{ position:'absolute', left: 40, top: 40 }}><KidsPpLabel p={PLANTS[0]}/></div>
+              <div style={{ position:'absolute', left: 300, top: 100 }}><KidsPpLabel p={PLANTS[1]}/></div>
+              <div style={{ position:'absolute', left: 540, top: 60 }}><KidsPpLabel p={PLANTS[2]}/></div>
+              <div style={{ position:'absolute', left: 420, top: 170 }}><KidsPpLabel p={PLANTS[5]}/></div>
+            </div>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="pp-system" title="Power Plants · System Reference" subtitle="Plant vocabulary, semantic palette, rules, Unity binding.">
+          <DCArtboard id="pp-ref" label="Plant types + palette + rules" width={1080} height={540}>
+            <PpReferenceBoard/>
+          </DCArtboard>
+          <DCArtboard id="pp-unity" label="Unity implementation" width={920} height={440}>
+            <PpUnityNotes/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="system" title="Design System" subtitle="Tokens, typography, and the shared status vocabulary both modes honor.">
+          <DCArtboard id="palette" label="Color tokens" width={620} height={440}>
+            <PaletteBoard/>
+          </DCArtboard>
+          <DCArtboard id="type" label="Typography" width={620} height={440}>
+            <TypeBoard/>
+          </DCArtboard>
+          <DCArtboard id="status" label="Status vocabulary" width={620} height={440}>
+            <StatusBoard/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="unity" title="Unity · Implementation" subtitle="Canvas render modes, sizing, data binding, mode switching, accessibility.">
+          <DCArtboard id="notes" label="Implementation notes" width={920} height={540}>
+            <UnityNotes/>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

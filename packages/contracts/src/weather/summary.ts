@@ -27,6 +27,11 @@ export const WeatherSummarySchema = z.object({
   precipitationMmH: z.number().min(0),
   isDaytime: z.boolean(),
   season: SeasonSchema,
+  // Daylight context — preferred over season for lighting decisions
+  sunrise: z.number().optional(),       // decimal hour, e.g. 6.5 = 06:30
+  sunset: z.number().optional(),        // decimal hour, e.g. 19.75 = 19:45
+  daylightHours: z.number().optional(), // total daylight duration today
+  locationId: z.string().optional(),    // selected simulation location
   updatedAt: z.string().datetime(),
 })
 

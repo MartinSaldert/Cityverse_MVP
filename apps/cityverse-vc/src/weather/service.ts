@@ -1,4 +1,5 @@
 import { SimulationClock } from '../clock/clock.service.js'
+import { LocationService } from '../location/service.js'
 import { getCalendarContext } from './calendar.js'
 import { WEATHER_CONFIG } from './config.js'
 import {
@@ -25,7 +26,7 @@ export class WeatherService {
   private nudges: Required<WeatherNudge>
   private lastTickRealMs: number
 
-  constructor(private readonly clock: SimulationClock) {
+  constructor(private readonly clock: SimulationClock, private readonly location: LocationService) {
     this.nudges = {
       pressureBias: 0,
       cloudBias: 0,
@@ -39,7 +40,8 @@ export class WeatherService {
 
   private createInitialState(): WeatherState {
     const simTime = this.clock.getState().simTime
-    const cal = getCalendarContext(simTime)
+    const loc = this.location.getCurrent()
+    const cal = getCalendarContext(simTime, loc.latitude)
     const baseline = getSeasonalBaseline(cal.season)
     const cloudCover01 = WEATHER_CONFIG.defaults.cloudCover01
     const solarRadiationWm2 = computeSolarRadiation(baseline, cal, cloudCover01)
@@ -48,7 +50,11 @@ export class WeatherService {
 
     return {
       simTime,
+      locationId: loc.id,
       season: cal.season,
+      sunrise: cal.sunrise,
+      sunset: cal.sunset,
+      daylightHours: cal.daylightHours,
       daylightFactor: cal.daylightFactor,
       solarRadiationWm2,
       pressureHpa: WEATHER_CONFIG.defaults.pressureHpa,
@@ -76,7 +82,8 @@ export class WeatherService {
 
     const previousPressure = this.state.pressureHpa
     const simTime = clockState.simTime
-    const cal = getCalendarContext(simTime)
+    const loc = this.location.getCurrent()
+    const cal = getCalendarContext(simTime, loc.latitude)
     const baseline = getSeasonalBaseline(cal.season)
 
     const pressureTarget = clamp(1015 + this.nudges.pressureBias, 980, 1045)
@@ -123,7 +130,11 @@ export class WeatherService {
 
     this.state = {
       simTime,
+      locationId: loc.id,
       season: cal.season,
+      sunrise: cal.sunrise,
+      sunset: cal.sunset,
+      daylightHours: cal.daylightHours,
       daylightFactor: cal.daylightFactor,
       solarRadiationWm2,
       pressureHpa: nextPressure,

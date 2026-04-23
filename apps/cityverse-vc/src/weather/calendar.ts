@@ -3,18 +3,13 @@ import { Season } from './types.js'
 export interface CalendarContext {
   month: number
   hourDecimal: number
+  dayOfYear: number
   season: Season
   sunrise: number
   sunset: number
+  daylightHours: number
   daylightFactor: number
   summerFactor: number
-}
-
-const SEASON_DAYLIGHT: Record<Season, number> = {
-  winter: 8,
-  spring: 12,
-  summer: 16,
-  autumn: 11,
 }
 
 export function getSeason(month: number): Season {
@@ -24,23 +19,45 @@ export function getSeason(month: number): Season {
   return 'autumn'
 }
 
-export function getCalendarContext(simTimeIso: string): CalendarContext {
+function getDayOfYear(d: Date): number {
+  const startOfYear = Date.UTC(d.getUTCFullYear(), 0, 1)
+  return Math.floor((d.getTime() - startOfYear) / 86400000) + 1
+}
+
+// Cooper's equation for solar declination + hour-angle sunrise formula.
+// Returns day length in hours for the given latitude and day of year.
+export function computeDaylightHours(latitude: number, dayOfYear: number): number {
+  const declination = -23.45 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10))
+  const latRad = (latitude * Math.PI) / 180
+  const declRad = (declination * Math.PI) / 180
+
+  const cosH = -Math.tan(latRad) * Math.tan(declRad)
+  if (cosH <= -1) return 24  // polar day
+  if (cosH >= 1) return 0    // polar night
+
+  const hourAngle = Math.acos(cosH)
+  return (2 * hourAngle * 180) / (Math.PI * 15)
+}
+
+export function getCalendarContext(simTimeIso: string, latitude = 59.33): CalendarContext {
   const d = new Date(simTimeIso)
   const month = d.getUTCMonth() + 1
   const hourDecimal = d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600
+  const dayOfYear = getDayOfYear(d)
 
   const season = getSeason(month)
-  const daylightDuration = SEASON_DAYLIGHT[season]
-  const sunrise = 12 - daylightDuration / 2
-  const sunset = 12 + daylightDuration / 2
+  const daylightHours = computeDaylightHours(latitude, dayOfYear)
+  const sunrise = 12 - daylightHours / 2
+  const sunset = 12 + daylightHours / 2
 
   let daylightFactor = 0
-  if (hourDecimal >= sunrise && hourDecimal <= sunset) {
+  if (daylightHours > 0 && hourDecimal >= sunrise && hourDecimal <= sunset) {
     const progress = (hourDecimal - sunrise) / (sunset - sunrise)
     daylightFactor = Math.max(0, Math.sin(Math.PI * progress))
   }
 
-  const summerFactor = season === 'summer' ? 1.0 : (season === 'spring' || season === 'autumn' ? 0.4 : 0.0)
+  // 0 near winter solstice, 1 near summer solstice — smooth latitude+date gradient
+  const summerFactor = Math.max(0, (daylightHours - 9) / 9)
 
-  return { month, hourDecimal, season, sunrise, sunset, daylightFactor, summerFactor }
+  return { month, hourDecimal, dayOfYear, season, sunrise, sunset, daylightHours, daylightFactor, summerFactor }
 }

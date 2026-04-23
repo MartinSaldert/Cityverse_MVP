@@ -1,6 +1,8 @@
 import mqtt from 'mqtt'
 import { EnergySummarySchema, mqttTopics } from '@cityverse/contracts'
 import { setLatestEnergy } from './state.js'
+import { recordFlowIngest, recordBrokerConnected, recordBrokerDisconnected } from '../ops/flowRegistry.js'
+import { appendHistoryRecord } from '../history/store.js'
 import type { FastifyBaseLogger } from 'fastify'
 
 export function startEnergyIngest(log: FastifyBaseLogger): mqtt.MqttClient {
@@ -8,6 +10,7 @@ export function startEnergyIngest(log: FastifyBaseLogger): mqtt.MqttClient {
   const client = mqtt.connect(brokerUrl)
 
   client.on('connect', () => {
+    recordBrokerConnected('energy')
     log.info({ brokerUrl }, 'Energy MQTT connected')
     client.subscribe(mqttTopics.energyTelemetry, (err) => {
       if (err) {
@@ -36,8 +39,16 @@ export function startEnergyIngest(log: FastifyBaseLogger): mqtt.MqttClient {
     }
 
     setLatestEnergy(result.data)
+    recordFlowIngest('energy', result.data.updatedAt)
+    appendHistoryRecord('energy', result.data.updatedAt, {
+      totalRenewableKw: result.data.totalRenewableKw,
+      solarOutputKw: result.data.solarOutputKw,
+      windOutputKw: result.data.windOutputKw,
+    })
     log.debug({ updatedAt: result.data.updatedAt }, 'Energy telemetry ingested')
   })
+
+  client.on('offline', () => { recordBrokerDisconnected('energy') })
 
   client.on('error', (err) => {
     log.error({ err }, 'Energy MQTT client error')

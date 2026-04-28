@@ -27,6 +27,50 @@ export interface ProjectedBranchState {
   estimationNotes: string[]
 }
 
+// Physical wind-power law: P ∝ v³ below rated speed.
+// 3 m/s is the typical cut-in speed for city-scale turbines; below this,
+// output is near zero and the baseline is not a reliable projection anchor.
+// 4× cap prevents overestimation near/above rated speed (which varies by
+// turbine; typically 12–15 m/s for city-scale installations).
+const WIND_CUT_IN_MS = 3
+const WIND_CUBIC_CAP_RATIO = 4
+
+function projectWindOutput(
+  baseOutputKw: number | null,
+  oldSpeedMs: number,
+  newSpeedMs: number,
+): { outputKw: number | null; note: string } {
+  if (newSpeedMs <= 0) {
+    return { outputKw: 0, note: `Wind speed reduced to ≤0 m/s; wind output set to 0.` }
+  }
+
+  const validBase =
+    baseOutputKw !== null && baseOutputKw > 0 && oldSpeedMs >= WIND_CUT_IN_MS
+  if (!validBase) {
+    const reason =
+      baseOutputKw === null
+        ? 'baseline wind output data unavailable'
+        : baseOutputKw <= 0
+          ? `baseline wind output was 0 kW at ${oldSpeedMs.toFixed(1)} m/s (turbines offline or below cut-in)`
+          : `baseline wind speed ${oldSpeedMs.toFixed(1)} m/s is below typical cut-in (${WIND_CUT_IN_MS} m/s)`
+    return {
+      outputKw: null,
+      note: `Wind speed ${oldSpeedMs.toFixed(1)} → ${newSpeedMs.toFixed(1)} m/s: ${reason}. Cannot derive projected output without rated turbine capacity data. At ${newSpeedMs.toFixed(1)} m/s, installed turbines should produce positive generation.`,
+    }
+  }
+
+  const cubicRatio = Math.pow(newSpeedMs / oldSpeedMs, 3)
+  const effectiveRatio = Math.min(cubicRatio, WIND_CUBIC_CAP_RATIO)
+  const outputKw = Math.max(0, baseOutputKw * effectiveRatio)
+  const wasCapped = effectiveRatio < cubicRatio
+  return {
+    outputKw,
+    note: wasCapped
+      ? `Wind output projected via cubic speed law (v³, capped at ${WIND_CUBIC_CAP_RATIO}× baseline): ${oldSpeedMs} → ${newSpeedMs.toFixed(1)} m/s. Capped because rated speed is unknown; actual may be higher.`
+      : `Wind output projected via cubic speed law (v³ below rated speed): ${oldSpeedMs} → ${newSpeedMs.toFixed(1)} m/s. May overestimate if new speed is near or above turbine rated speed.`,
+  }
+}
+
 // Safe deep-read helpers — never mutate the source object
 function num(obj: unknown, ...keys: string[]): number | null {
   let v: unknown = obj
@@ -143,12 +187,9 @@ export function projectBranchState(
       if (typeof p.windBias === 'number') {
         const oldWind = windSpeedMs ?? 0
         windSpeedMs = Math.max(0, oldWind + p.windBias)
-        if (windOutputKw !== null && oldWind > 0) {
-          windOutputKw = Math.max(0, windOutputKw * windSpeedMs / oldWind)
-          notes.push('Wind output scaled proportionally to wind speed (simplified linear; actual is cubic in wind speed).')
-        } else if (windOutputKw !== null && oldWind === 0 && windSpeedMs > 0) {
-          notes.push('Wind speed increased from 0; output cannot be derived without rated capacity data.')
-        }
+        const { outputKw, note } = projectWindOutput(windOutputKw, oldWind, windSpeedMs)
+        windOutputKw = outputKw
+        notes.push(note)
       }
 
       if (typeof p.humidityBias === 'number') {

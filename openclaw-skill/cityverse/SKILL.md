@@ -147,7 +147,7 @@ Always surface these to the user:
 - Building-level entity deltas require per-building data not available in Phase 2
 - Demand is held constant from baseline; historical replay is Phase 3+
 - Solar output uses a simplified sin-curve daylight model (06:00–20:00 window)
-- Wind output is scaled linearly; actual power is cubic in wind speed
+- Wind output is projected using a cubic speed approximation (P ∝ v³ below rated speed, capped at 4× baseline output); zero or below-cut-in baseline cases return null output with an explicit limitation note rather than a misleading zero
 - Weather nudge is applied once to baseline; in the live system it is cumulative
 
 The `limitations` and `unsupportedClaims` fields in the result contain these in machine-readable form. Always report them when presenting analysis results.

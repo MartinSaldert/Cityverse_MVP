@@ -107,6 +107,28 @@ export function compareScenario(
   if (projected.solarOutputKw === 0 && baseSolar !== null && baseSolar > 0) {
     riskNotes.push('Solar output drops to zero — check time-of-day or cloud cover in branch commands.')
   }
+  if (
+    projected.oilBackupOnline &&
+    projected.oilBackupOutputKw !== null &&
+    projected.oilBackupOutputKw > 0 &&
+    projected.totalRenewableKw !== null &&
+    baseTotalRenewable !== null &&
+    projected.totalRenewableKw < baseTotalRenewable
+  ) {
+    riskNotes.push(
+      `Oil backup is online (${projected.oilBackupOutputKw.toFixed(0)} kW) and may be masking a renewable shortfall — renewable output fell from ${baseTotalRenewable.toFixed(0)} kW to ${projected.totalRenewableKw.toFixed(0)} kW in this branch. Demand held constant; oil is not modelled as increasing to compensate.`
+    )
+  }
+  if (
+    projected.windSpeedMs !== null &&
+    baseWind !== null &&
+    projected.windSpeedMs > baseWind &&
+    projected.windOutputKw === null
+  ) {
+    riskNotes.push(
+      `Wind speed increased from ${baseWind.toFixed(1)} to ${projected.windSpeedMs.toFixed(1)} m/s but wind output could not be projected (see estimation notes — zero or below-cut-in baseline). At ${projected.windSpeedMs.toFixed(1)} m/s, installed turbines should produce positive generation.`
+    )
+  }
 
   const limitations: string[] = [
     ...KNOWN_LIMITATIONS,

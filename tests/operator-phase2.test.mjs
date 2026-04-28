@@ -177,7 +177,7 @@ test('weather_nudge cloudBias increases cloudCover and reduces solar', () => {
   assert.ok(projected.cloudCover !== null && Math.abs(projected.cloudCover - 0.7) < 0.001, 'cloudCover ≈ 0.7')
 })
 
-test('weather_nudge windBias increases windSpeedMs and windOutputKw', () => {
+test('weather_nudge windBias increases windSpeedMs and windOutputKw via cubic law', () => {
   const branch = validateBranch({
     branchId: 'b-wind',
     name: 'Wind increase',
@@ -191,8 +191,9 @@ test('weather_nudge windBias increases windSpeedMs and windOutputKw', () => {
   const projected = projectBranchState(MOCK_BASELINE, branch)
   assert.equal(projected.windSpeedMs, 12, 'windSpeed = 8 + 4 = 12 m/s')
   assert.ok(projected.windOutputKw !== null && projected.windOutputKw > 500, 'wind output should increase')
-  // Linear scale: 500 * 12/8 = 750
-  assert.equal(projected.windOutputKw, 750, 'windOutput = 500 * 12/8 = 750 kW')
+  // Cubic scale: 500 * (12/8)³ = 500 * 3.375 = 1687.5 (no cap: 3.375 < 4×)
+  assert.equal(projected.windOutputKw, 1687.5, 'windOutput = 500 * (12/8)³ = 1687.5 kW')
+  assert.ok(projected.estimationNotes.some(n => n.includes('cubic')), 'note should mention cubic approximation')
 })
 
 test('weather_nudge tempBias changes temperature', () => {
@@ -274,7 +275,7 @@ test('projectBranchState recomputes totalRenewableKw and balanceKw', () => {
 
   const projected = projectBranchState(MOCK_BASELINE, branch)
   // cloud 0.3+0.3=0.6 → solar fraction (1-0.6)/(1-0.3) = 0.4/0.7 ≈ 0.571 → solar ≈ 571.4
-  // wind 8+4=12 → 500*12/8 = 750
+  // wind 8+4=12 → cubic: 500*(12/8)³ = 1687.5 kW
   assert.ok(projected.totalRenewableKw !== null, 'totalRenewableKw should be computed')
   assert.ok(projected.balanceKw !== null, 'balanceKw should be computed')
   const expectedTotal = (projected.solarOutputKw ?? 0) + (projected.windOutputKw ?? 0) + (projected.oilBackupOutputKw ?? 0)
@@ -392,4 +393,172 @@ test('analysis core functions work with fully null baseline (no services require
   assert.ok(result.unsupportedClaims.length > 0)
   assert.equal(result.baseline.profile, 'portable-test')
   assert.equal(result.baseline.sources.vc, 'unavailable')
+})
+
+// --- Phase 2.5: wind modeling improvements ---
+
+test('windBias from zero-speed baseline sets windOutputKw to null with informative note', () => {
+  const zeroWindBaseline = {
+    ...MOCK_BASELINE,
+    vc: {
+      ...MOCK_BASELINE.vc,
+      weather: { ...MOCK_BASELINE.vc.weather, windSpeedMs: 0 },
+      energy: { ...MOCK_BASELINE.vc.energy, windOutputKw: 0 },
+    },
+  }
+
+  const branch = validateBranch({
+    branchId: 'b-wind-zero',
+    name: 'Wind from calm',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { windBias: 8 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(zeroWindBaseline, branch)
+  assert.equal(projected.windSpeedMs, 8, 'wind speed should update to 8 m/s')
+  assert.equal(projected.windOutputKw, null, 'output is null — cannot project from zero baseline')
+  assert.ok(
+    projected.estimationNotes.some(n => n.includes('8.0 m/s') && n.includes('positive')),
+    'note should say wind speed reached 8 m/s and real turbines should produce positive generation'
+  )
+})
+
+test('windBias from below-cut-in baseline sets windOutputKw to null with informative note', () => {
+  // 2 m/s is below typical cut-in (~3 m/s); baseline is unreliable as anchor
+  const lowWindBaseline = {
+    ...MOCK_BASELINE,
+    vc: {
+      ...MOCK_BASELINE.vc,
+      weather: { ...MOCK_BASELINE.vc.weather, windSpeedMs: 2 },
+      energy: { ...MOCK_BASELINE.vc.energy, windOutputKw: 5 },
+    },
+  }
+
+  const branch = validateBranch({
+    branchId: 'b-wind-low',
+    name: 'Wind from below cut-in',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { windBias: 8 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(lowWindBaseline, branch)
+  assert.equal(projected.windSpeedMs, 10, 'wind speed should update to 10 m/s')
+  assert.equal(projected.windOutputKw, null, 'output is null — below-cut-in baseline is not a reliable anchor')
+  assert.ok(
+    projected.estimationNotes.some(n => n.includes('cut-in') || n.includes('capacity')),
+    'note should explain why output cannot be projected'
+  )
+})
+
+test('cubic wind scaling is capped at 4× baseline for large speed increases', () => {
+  // Baseline at 8 m/s, 500 kW. Bias to 20 m/s: cubic ratio = (20/8)³ = 15.625 > 4× cap
+  const branch = validateBranch({
+    branchId: 'b-wind-cap',
+    name: 'Large wind increase',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { windBias: 12 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(MOCK_BASELINE, branch)
+  assert.equal(projected.windSpeedMs, 20, 'wind speed = 8 + 12 = 20 m/s')
+  // Cap: min((20/8)³, 4) * 500 = 4 * 500 = 2000 kW
+  assert.equal(projected.windOutputKw, 2000, 'windOutput capped at 4× baseline = 2000 kW')
+  assert.ok(
+    projected.estimationNotes.some(n => n.includes('capped')),
+    'note should mention cap was applied'
+  )
+})
+
+test('cloud increase plus wind increase: total renewable benefits from wind despite solar loss', () => {
+  // Phase 2.5 key scenario: clouds up + wind up → total renewable should still rise
+  // cloudBias +0.5: cloud 0.3→0.8, solar fraction (1-0.8)/(1-0.3)=0.2/0.7≈0.2857, solar≈285.7
+  // windBias +4: wind cubic 500*(12/8)³=1687.5
+  // total≈1973 > baseline 1500 — wind gain outweighs solar loss
+  const branch = validateBranch({
+    branchId: 'b-cloud-wind',
+    name: 'Cloud increase plus wind increase',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { cloudBias: 0.5, windBias: 4 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(MOCK_BASELINE, branch)
+  assert.ok(projected.solarOutputKw !== null && projected.solarOutputKw < 1000, 'solar decreases with heavier cloud')
+  assert.ok(projected.windOutputKw !== null && projected.windOutputKw > 500, 'wind increases with higher speed')
+  assert.ok(
+    projected.totalRenewableKw !== null && projected.totalRenewableKw > 1500,
+    'cubic wind gain outweighs solar loss — total renewable exceeds baseline 1500 kW'
+  )
+})
+
+test('compareScenario notes wind speed increase with null output as a riskNote', () => {
+  const zeroWindBaseline = {
+    ...MOCK_BASELINE,
+    vc: {
+      ...MOCK_BASELINE.vc,
+      weather: { ...MOCK_BASELINE.vc.weather, windSpeedMs: 0 },
+      energy: { ...MOCK_BASELINE.vc.energy, windOutputKw: 0 },
+    },
+  }
+
+  const branch = validateBranch({
+    branchId: 'b-wind-risknote',
+    name: 'Wind risk note',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { windBias: 10 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(zeroWindBaseline, branch)
+  const result = compareScenario(zeroWindBaseline, branch, projected)
+  assert.ok(
+    result.riskNotes.some(n => n.includes('10.0 m/s') && n.includes('positive')),
+    'riskNote should explain wind speed increased but output could not be projected'
+  )
+})
+
+test('compareScenario notes oil backup masking renewable shortfall', () => {
+  const oilOnlineBaseline = {
+    ...MOCK_BASELINE,
+    vc: {
+      ...MOCK_BASELINE.vc,
+      energy: {
+        ...MOCK_BASELINE.vc.energy,
+        oilBackupOutputKw: 400,
+        oilBackupOnline: true,
+        totalGenerationKw: 1900,
+      },
+    },
+  }
+
+  // Heavy cloud increase → solar drops → totalRenewable falls below baseline
+  const branch = validateBranch({
+    branchId: 'b-oil-mask',
+    name: 'Oil masking renewable loss',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { cloudBias: 0.6 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(oilOnlineBaseline, branch)
+  const result = compareScenario(oilOnlineBaseline, branch, projected)
+  assert.ok(
+    result.riskNotes.some(n => n.includes('Oil backup') && n.includes('masking')),
+    'riskNote should mention oil backup masking renewable shortfall'
+  )
 })

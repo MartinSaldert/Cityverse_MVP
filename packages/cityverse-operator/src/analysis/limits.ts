@@ -7,7 +7,7 @@ export const KNOWN_LIMITATIONS: string[] = [
   'Relative demand projection is estimated from the current model, not historical replay.',
   'This result reflects a simplified energy and weather model.',
   'Weather nudge is cumulative in the live system; in analysis it is applied once to the captured baseline.',
-  'Wind output is scaled linearly with wind speed; actual power output is cubic in wind speed.',
+  'Wind output is projected using a cubic speed approximation (P ∝ v³ below rated speed, capped at 4× baseline). Near-rated or above-rated speeds may still be overestimated. Zero or below-cut-in baseline cases return null output with a limitation note.',
   'Solar output uses a simplified sin-curve daylight model (06:00–20:00 window).',
 ]
 

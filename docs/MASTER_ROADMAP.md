@@ -279,3 +279,10 @@ After this roadmap, the next practical step is:
 - convert the backlog into milestone-gated execution tasks with acceptance criteria and recommended order inside each milestone
 
 That backlog should be treated as the working build plan.
+
+## AI roadmap companion
+
+A dedicated AI roadmap now also exists:
+- `docs/CITYVERSE_AI_MASTER_ROADMAP.md`
+
+That document should guide the portable OpenClaw skill, operator API/tooling layer, scenario analysis, retrieval, DT-aware reasoning, and later avatar embodiment work.

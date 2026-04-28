@@ -144,6 +144,38 @@ After each packet:
 - inspect architecture boundaries
 - verify assumptions still match the plan
 
+## New packet, 2026-04-27
+
+### Packet 7, Cityverse AI operator Phase 1
+
+See:
+- `docs/CITYVERSE_AI_ARCHITECTURE.md`
+- `docs/CITYVERSE_AI_OPERATOR_API.md`
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE1.md`
+
+Goal:
+- create the first portable Cityverse OpenClaw skill draft,
+- build a small tool adapter over VC/IOT/DT APIs,
+- support read flows plus a narrow safe VC command set,
+- establish audit-friendly AI command behavior.
+
+### Packet 8, Cityverse AI operator Phase 2 scenario analysis
+
+See:
+- `docs/CITYVERSE_AI_ARCHITECTURE.md`
+- `docs/CITYVERSE_AI_OPERATOR_API.md`
+- `docs/CITYVERSE_AI_PORTABILITY_REQUIREMENTS.md`
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE2_SCENARIO_ANALYSIS.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_PHASE2_IMPLEMENTATION.md`
+
+Goal:
+- create the first trustworthy hypothetical-analysis path,
+- capture baseline state,
+- represent branch changes as structured commands,
+- evaluate branch outcomes without mutating live operator state,
+- produce structured diffs the LLM can explain honestly,
+- keep the Phase 2 analysis layer portable across OpenClaw installs.
+
 ## Short conclusion
 
 These packets are intentionally narrow enough to move quickly without asking Claude to improvise an entire civilization from one markdown file.

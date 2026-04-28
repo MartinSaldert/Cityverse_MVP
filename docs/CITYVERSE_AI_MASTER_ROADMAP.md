@@ -48,10 +48,11 @@ Recommended order:
 4. scenario analysis
 5. real OpenClaw-facing tool surface
 6. energy/scenario-model tightening
-7. retrieval/doc intelligence
-8. DT-aware twin and scene reasoning
-9. Unity/avatar embodiment
-10. operational hardening and deployment profiles
+7. AI implementation runtime + guardrails + acceptance
+8. retrieval/doc intelligence
+9. DT-aware twin and scene reasoning
+10. Unity/avatar embodiment
+11. operational hardening and deployment profiles
 
 This order is admirably dull, which is precisely why it has a chance of working.
 
@@ -180,7 +181,29 @@ Improve the weakest current scenario-analysis behaviors, especially around wind 
 - weak near-zero wind cases are handled more honestly
 - deterministic portable analysis behavior is preserved
 
-## Milestone G, retrieval and doc intelligence
+## Milestone G, AI implementation runtime + guardrails + acceptance
+
+### Goal
+Turn the Cityverse AI surface into a genuinely runnable operator workflow in OpenClaw.
+
+### Deliver
+- end-to-end runtime wiring for Cityverse tools
+- explicit action policy and guardrails
+- canonical inspect/explain/propose/compare operator flow
+- degraded-mode behavior for VC/IOT/DT availability differences
+- acceptance checks proving real operator readiness
+
+### Reference packet
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
+
+### Exit criteria
+- Cityverse tools are callable through a real runtime path
+- safe vs blocked actions are explicit and enforced
+- operator flow is repeatable and documented
+- acceptance checks pass
+
+## Milestone H, retrieval and doc intelligence
 
 ### Goal
 Improve explanation quality for architecture and operations questions.
@@ -203,7 +226,7 @@ Improve explanation quality for architecture and operations questions.
 - retrieval is focused and source-aware
 - the skill no longer needs to overstuff static instructions with every detail
 
-## Milestone H, DT-aware AI reasoning
+## Milestone I, DT-aware AI reasoning
 
 ### Goal
 Teach the operator to reason about the twin and scene, not just service APIs.
@@ -220,7 +243,7 @@ Teach the operator to reason about the twin and scene, not just service APIs.
 - the AI can explain what the user is seeing in the scene
 - DT is treated as a first-class reasoning surface, not an afterthought
 
-## Milestone I, Unity embodiment and avatar layer
+## Milestone J, Unity embodiment and avatar layer
 
 ### Goal
 Give the Cityverse AI an in-world presence without entangling reasoning and rendering.
@@ -237,7 +260,7 @@ Give the Cityverse AI an in-world presence without entangling reasoning and rend
 - embodiment remains optional and decoupled from core reasoning/control
 - failures in avatar systems do not break operator reasoning
 
-## Milestone J, operational hardening
+## Milestone K, operational hardening
 
 ### Goal
 Prepare the AI operator for broader deployment and long-term use.
@@ -284,15 +307,17 @@ This ladder is useful because it stops us pretending Level 6 matters before Leve
 3. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_SCENARIO_ANALYSIS.md`
 4. implement `CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
 5. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
-6. create retrieval packet after the tool surface and energy-model tightening are proven
-7. extend toward DT-aware reasoning
-8. only then begin avatar implementation planning as executable work
+6. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
+7. create retrieval packet after runtime+guardrail implementation is proven
+8. extend toward DT-aware reasoning
+9. only then begin avatar implementation planning as executable work
 
 ## Recommended future packets to add
 
 The next likely planning docs after Phase 2 are now:
 - `CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+- `CLAUDE_PACKET_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_PHASE3_RETRIEVAL.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_DT_REASONING.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_AVATAR_BRIDGE.md`

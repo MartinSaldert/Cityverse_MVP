@@ -12,9 +12,10 @@ import {
   setSimulationSpeed,
   setSimulationTime,
   applyWeatherNudge,
+  checkActionPolicy,
 } from '../../../cityverse-operator/dist/index.js'
 import type { CityverseConfig } from '../../../cityverse-operator/dist/index.js'
-import { fromReadResult, fromCommandResult, errorEnvelope } from '../envelope.js'
+import { fromReadResult, fromCommandResult, errorEnvelope, blockedEnvelope } from '../envelope.js'
 import type { ToolEnvelope } from '../envelope.js'
 
 const DEFAULT_ACTOR = 'cityverse_operator'
@@ -106,9 +107,11 @@ export async function handleVcPause(
   input: Record<string, unknown> = {},
   config?: CityverseConfig,
 ): Promise<ToolEnvelope> {
+  const cfg = config ?? loadConfig()
+  const policy = checkActionPolicy('cityverse.vc.pause', cfg)
+  if (!policy.allowed) return blockedEnvelope('cityverse.vc.pause', 'pause', policy.blockedReason, policy.blockedMessage, policy.policyVersion)
   const parsed = ActorInput.safeParse(input)
   if (!parsed.success) return errorEnvelope('cityverse.vc.pause', 'pause', 'vc', parsed.error.message)
-  const cfg = config ?? loadConfig()
   const r = await pauseSimulation(cfg, parsed.data.actor ?? DEFAULT_ACTOR)
   return fromCommandResult('cityverse.vc.pause', r)
 }
@@ -117,9 +120,11 @@ export async function handleVcResume(
   input: Record<string, unknown> = {},
   config?: CityverseConfig,
 ): Promise<ToolEnvelope> {
+  const cfg = config ?? loadConfig()
+  const policy = checkActionPolicy('cityverse.vc.resume', cfg)
+  if (!policy.allowed) return blockedEnvelope('cityverse.vc.resume', 'resume', policy.blockedReason, policy.blockedMessage, policy.policyVersion)
   const parsed = ActorInput.safeParse(input)
   if (!parsed.success) return errorEnvelope('cityverse.vc.resume', 'resume', 'vc', parsed.error.message)
-  const cfg = config ?? loadConfig()
   const r = await resumeSimulation(cfg, parsed.data.actor ?? DEFAULT_ACTOR)
   return fromCommandResult('cityverse.vc.resume', r)
 }
@@ -128,9 +133,11 @@ export async function handleVcSetSpeed(
   input: Record<string, unknown> = {},
   config?: CityverseConfig,
 ): Promise<ToolEnvelope> {
+  const cfg = config ?? loadConfig()
+  const policy = checkActionPolicy('cityverse.vc.set_speed', cfg)
+  if (!policy.allowed) return blockedEnvelope('cityverse.vc.set_speed', 'set_speed', policy.blockedReason, policy.blockedMessage, policy.policyVersion)
   const parsed = SetSpeedInput.safeParse(input)
   if (!parsed.success) return errorEnvelope('cityverse.vc.set_speed', 'set_speed', 'vc', parsed.error.message)
-  const cfg = config ?? loadConfig()
   const r = await setSimulationSpeed(cfg, parsed.data.speed, parsed.data.actor ?? DEFAULT_ACTOR)
   return fromCommandResult('cityverse.vc.set_speed', r)
 }
@@ -139,9 +146,11 @@ export async function handleVcSetTime(
   input: Record<string, unknown> = {},
   config?: CityverseConfig,
 ): Promise<ToolEnvelope> {
+  const cfg = config ?? loadConfig()
+  const policy = checkActionPolicy('cityverse.vc.set_time', cfg)
+  if (!policy.allowed) return blockedEnvelope('cityverse.vc.set_time', 'set_time', policy.blockedReason, policy.blockedMessage, policy.policyVersion)
   const parsed = SetTimeInput.safeParse(input)
   if (!parsed.success) return errorEnvelope('cityverse.vc.set_time', 'set_time', 'vc', parsed.error.message)
-  const cfg = config ?? loadConfig()
   const r = await setSimulationTime(cfg, parsed.data.simTime, parsed.data.actor ?? DEFAULT_ACTOR)
   return fromCommandResult('cityverse.vc.set_time', r)
 }
@@ -150,9 +159,11 @@ export async function handleVcWeatherNudge(
   input: Record<string, unknown> = {},
   config?: CityverseConfig,
 ): Promise<ToolEnvelope> {
+  const cfg = config ?? loadConfig()
+  const policy = checkActionPolicy('cityverse.vc.weather_nudge', cfg)
+  if (!policy.allowed) return blockedEnvelope('cityverse.vc.weather_nudge', 'weather_nudge', policy.blockedReason, policy.blockedMessage, policy.policyVersion)
   const parsed = WeatherNudgeInput.safeParse(input)
   if (!parsed.success) return errorEnvelope('cityverse.vc.weather_nudge', 'weather_nudge', 'vc', parsed.error.message)
-  const cfg = config ?? loadConfig()
   const r = await applyWeatherNudge(cfg, parsed.data.nudge, parsed.data.actor ?? DEFAULT_ACTOR)
   return fromCommandResult('cityverse.vc.weather_nudge', r)
 }

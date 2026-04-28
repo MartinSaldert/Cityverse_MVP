@@ -147,7 +147,7 @@ Always surface these to the user:
 - Building-level entity deltas require per-building data not available in Phase 2
 - Demand is held constant from baseline; historical replay is Phase 3+
 - Solar output uses a simplified sin-curve daylight model (06:00–20:00 window)
-- Wind output is projected using a cubic speed approximation (P ∝ v³ below rated speed, capped at 4× baseline output); zero or below-cut-in baseline cases return null output with an explicit limitation note rather than a misleading zero
+- Wind output is projected using a cubic speed approximation (P ∝ v³ below rated speed, capped at 4× baseline output); the analysis engine is aligned to the VC wind-fleet cut-in of 2.5 m/s, and zero or below-cut-in baseline cases return null output with an explicit limitation note rather than a misleading zero
 - Weather nudge is applied once to baseline; in the live system it is cumulative
 
 The `limitations` and `unsupportedClaims` fields in the result contain these in machine-readable form. Always report them when presenting analysis results.
@@ -246,6 +246,61 @@ The audit log is in-memory in Phase 1. It does not persist across restarts. Pers
 
 ---
 
+## Phase 3 capabilities (runtime + guardrails + operator flows)
+
+Phase 3 makes the operator genuinely runnable end-to-end in OpenClaw.
+
+### Guardrail policy
+
+Every control action passes through an explicit policy check before execution. The policy defines three action classes:
+
+| Class | Meaning | Example tools |
+|---|---|---|
+| `always_allowed` | Safe reads and in-memory analysis, no gate | all `get_*`, `analysis.*`, `docs.search` |
+| `safe_control` | Live VC controls — allowed by default, explicitly checked | `pause`, `resume`, `set_speed`, `set_time`, `weather_nudge` |
+| `blocked` | Not implemented or policy-denied — returns structured blocked envelope | DT commands, generator dispatch, building/district overrides |
+
+A blocked action returns a structured `ToolEnvelope` with `success: false`, `meta.blocked: true`, `meta.blockedReason`, and a human-readable message. **Never retry a blocked action without a policy change.**
+
+Blocked tools include:
+- `cityverse.dt.*` — DT service is not implemented
+- `cityverse.vc.generator_start` / `generator_stop` — generator dispatch is not supported; use `weather_nudge` or `set_time` for scenario modeling
+- `cityverse.vc.set_building_override` / `set_district_modifier` — not implemented
+
+### Service mode and degraded behavior
+
+Always call `cityverse.system.status` at the start of a session. The result now includes:
+
+- `serviceMode` — one of: `full`, `vc_iot`, `vc_only`, `iot_only`, `analysis_only`, `degraded`
+- `availableFlows` — per-flow availability: `inspect`, `control`, `analyze`, `docsSearch`, `iotHistory`
+- `degradedNotes` — human-readable explanation of each unavailable service
+
+| serviceMode | What works |
+|---|---|
+| `full` | everything |
+| `vc_iot` | all except DT (normal operating mode) |
+| `vc_only` | inspect + control via VC, no IOT history |
+| `iot_only` | IOT reads only, no live control |
+| `analysis_only` | in-memory analysis + docs search only (no live services) |
+| `degraded` | partial/unusual availability — check `availableFlows` |
+
+IOT returns 503 until MQTT telemetry arrives from VC. This is `vc_only` mode, not a fault.
+
+### Canonical operator flow sequence
+
+The canonical operator flow for hypothetical questions:
+
+1. **Inspect** — `cityverse.system.status` → choose the right source tier
+2. **Read current state** — `cityverse.vc.get_weather` + `cityverse.vc.get_energy` (or IOT equivalents)
+3. **Explain limitations** — always surface `limitations` and `unsupportedClaims` before presenting analysis
+4. **Propose branch** — build a `ScenarioBranch` with supported commands (`set_time`, `set_speed`, `weather_nudge`)
+5. **Run comparison** — `capture_baseline` → `project_branch` → `compare`
+6. **Report** — present `metricDeltas`, `topFindings`, `riskNotes`, and always the full `limitations` + `unsupportedClaims`
+
+The `runScenarioComparison()` operator helper executes steps 4–5 in one call.
+
+---
+
 ## Extending this skill
 
 Phase 2 added (now available):
@@ -254,11 +309,13 @@ Phase 2 added (now available):
 - `projectBranchState` — evaluate a branch in memory without live mutations
 - `compareScenario` — produce metric deltas, top findings, limitations, provenance
 
-Phase 3 will add:
-- retrieval-backed docs search
-- command history search
-- runbook search
+Phase 3 added (now available):
+- guardrail policy — explicit action class for every tool
+- operator flow helpers — `inspectState`, `explainLimitations`, `runScenarioComparison`
+- degraded-mode service status — `serviceMode`, `availableFlows`, `degradedNotes`
 
 Phase 4 will add:
+- retrieval-backed docs search
+- command history search
 - Unity avatar bridge
 - speech output integration

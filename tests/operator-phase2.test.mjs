@@ -427,7 +427,7 @@ test('windBias from zero-speed baseline sets windOutputKw to null with informati
 })
 
 test('windBias from below-cut-in baseline sets windOutputKw to null with informative note', () => {
-  // 2 m/s is below typical cut-in (~3 m/s); baseline is unreliable as anchor
+  // 2 m/s is below the aligned VC/analysis cut-in (2.5 m/s); baseline is unreliable as anchor
   const lowWindBaseline = {
     ...MOCK_BASELINE,
     vc: {
@@ -453,6 +453,35 @@ test('windBias from below-cut-in baseline sets windOutputKw to null with informa
   assert.ok(
     projected.estimationNotes.some(n => n.includes('cut-in') || n.includes('capacity')),
     'note should explain why output cannot be projected'
+  )
+})
+
+test('windBias from above-cut-in baseline near 2.7 m/s now projects positive output', () => {
+  const nearCutInBaseline = {
+    ...MOCK_BASELINE,
+    vc: {
+      ...MOCK_BASELINE.vc,
+      weather: { ...MOCK_BASELINE.vc.weather, windSpeedMs: 2.7 },
+      energy: { ...MOCK_BASELINE.vc.energy, windOutputKw: 4.6, totalRenewableKw: 1004.6 },
+    },
+  }
+
+  const branch = validateBranch({
+    branchId: 'b-wind-near-cutin',
+    name: 'Wind from near cut-in',
+    commands: [
+      { targetService: 'vc', commandName: 'weather_nudge', targetEntityId: null, payload: { windBias: 5 }, order: 1 },
+    ],
+    horizon: { durationMinutes: 60, evaluationMode: 'instant' },
+    assumptions: [],
+  })
+
+  const projected = projectBranchState(nearCutInBaseline, branch)
+  assert.equal(projected.windSpeedMs, 7.7, 'wind speed should update to 7.7 m/s')
+  assert.ok(projected.windOutputKw !== null && projected.windOutputKw > 4.6, 'output should now project positively above cut-in')
+  assert.ok(
+    projected.estimationNotes.some(n => n.includes('cubic')),
+    'note should explain cubic wind projection'
   )
 })
 

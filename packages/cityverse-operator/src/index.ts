@@ -5,6 +5,33 @@ export { loadConfig } from './config.js'
 export { getAuditLog, clearAuditLog } from './audit.js'
 export { searchDocs } from './docs.js'
 
+// Phase 3: guardrail policy
+export {
+  checkActionPolicy,
+  ACTION_POLICY_TABLE,
+  GUARDRAIL_POLICY_VERSION,
+} from './guardrail.js'
+export type {
+  ActionClass,
+  BlockedReason,
+  ActionPolicy,
+  AllowedActionResult,
+  BlockedActionResult,
+  PolicyCheckResult,
+} from './guardrail.js'
+
+// Phase 3: operator flow helpers
+export {
+  inspectState,
+  explainLimitations,
+  runScenarioComparison,
+} from './flow.js'
+export type {
+  InspectStateResult,
+  LimitationsSummary,
+  ScenarioFlowResult,
+} from './flow.js'
+
 // Phase 2: scenario analysis
 export {
   captureBaseline,

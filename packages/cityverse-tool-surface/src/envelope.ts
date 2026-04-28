@@ -47,3 +47,22 @@ export function errorEnvelope(tool: string, action: string, source: string, mess
     errors: [message],
   }
 }
+
+export function blockedEnvelope(
+  tool: string,
+  action: string,
+  blockedReason: string,
+  blockedMessage: string,
+  policyVersion: string,
+): ToolEnvelope {
+  return {
+    success: false,
+    tool,
+    source: 'guardrail',
+    action,
+    timestampUtc: new Date().toISOString(),
+    result: null,
+    errors: [`Action blocked by guardrail policy: ${blockedMessage}`],
+    meta: { blocked: true, blockedReason, policyVersion },
+  }
+}

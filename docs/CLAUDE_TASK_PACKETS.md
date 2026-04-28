@@ -203,6 +203,21 @@ Goal:
 - improve low/zero baseline wind handling,
 - preserve deterministic and portable analysis behavior.
 
+### Packet 11, Cityverse AI Phase 3 implementation (runtime + guardrails + acceptance)
+
+See:
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_PHASE3_IMPLEMENTATION.md`
+- `docs/CITYVERSE_AI_MASTER_ROADMAP.md`
+- `docs/CITYVERSE_AI_PORTABILITY_REQUIREMENTS.md`
+
+Goal:
+- make Cityverse AI truly runnable end-to-end in OpenClaw,
+- enforce explicit action guardrails,
+- provide canonical operator conversation flow,
+- handle degraded service modes consistently,
+- ship acceptance checks proving implementation readiness.
+
 ## Short conclusion
 
 These packets are intentionally narrow enough to move quickly without asking Claude to improvise an entire civilization from one markdown file.

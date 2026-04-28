@@ -18,6 +18,7 @@ import {
 import { handleDocsSearch } from './tools/docs.js'
 
 export type { ToolEnvelope } from './envelope.js'
+export { blockedEnvelope } from './envelope.js'
 
 export {
   handleSystemStatus,

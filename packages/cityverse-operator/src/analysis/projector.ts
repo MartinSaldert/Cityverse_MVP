@@ -28,11 +28,12 @@ export interface ProjectedBranchState {
 }
 
 // Physical wind-power law: P ∝ v³ below rated speed.
-// 3 m/s is the typical cut-in speed for city-scale turbines; below this,
-// output is near zero and the baseline is not a reliable projection anchor.
+// Phase 2 should stay aligned with the live VC energy model, which now uses
+// a 2.5 m/s cut-in for its district-scale wind fleet. Below this, output is
+// near zero and the baseline is not a reliable projection anchor.
 // 4× cap prevents overestimation near/above rated speed (which varies by
 // turbine; typically 12–15 m/s for city-scale installations).
-const WIND_CUT_IN_MS = 3
+const WIND_CUT_IN_MS = 2.5
 const WIND_CUBIC_CAP_RATIO = 4
 
 function projectWindOutput(

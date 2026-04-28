@@ -2,6 +2,10 @@ import { EnergySummarySchema } from '@cityverse/contracts'
 import type { WeatherService } from '../weather/service.js'
 import type { BuildingService } from '../buildings/service.js'
 
+const SOLAR_CAPACITY_KW = 1200
+const WIND_FLEET_RATED_CAPACITY_KW = 1800
+const WIND_CUT_IN_MPS = 2.5
+const WIND_RATED_MPS = 12
 const OIL_BACKUP_CAPACITY_KW = 1200
 const OIL_CO2_KG_PER_MWH = 800
 
@@ -15,7 +19,7 @@ export class EnergyService {
     const weather = this.weather.getState()
     const demand = this.buildings.getDemandSummary()
 
-    const solarOutputKw = Math.max(0, (weather.solarRadiationWm2 / 1000) * 500)
+    const solarOutputKw = Math.max(0, (weather.solarRadiationWm2 / 1000) * SOLAR_CAPACITY_KW)
     const windOutputKw = Math.max(0, this.computeWindOutputKw(weather.windSpeedMps))
     const totalRenewableKw = solarOutputKw + windOutputKw
 
@@ -43,9 +47,17 @@ export class EnergyService {
   }
 
   private computeWindOutputKw(windSpeedMps: number): number {
-    if (windSpeedMps < 3) return 0
-    if (windSpeedMps >= 12) return 750
-    const normalized = (windSpeedMps - 3) / 9
-    return Math.pow(normalized, 3) * 750
+    if (windSpeedMps < WIND_CUT_IN_MPS) return 0
+    if (windSpeedMps >= WIND_RATED_MPS) return WIND_FLEET_RATED_CAPACITY_KW
+
+    // Treat VC wind as a small district-scale fleet, not a single decorative turbine.
+    // A lightly smoothed power curve is more believable at modest wind speeds than the
+    // previous near-zero cubic ramp, while still preserving strong gains in windier weather.
+    const normalized = (windSpeedMps - WIND_CUT_IN_MPS) / (WIND_RATED_MPS - WIND_CUT_IN_MPS)
+    const eased = Math.pow(normalized, 2.2)
+    const floorFraction = normalized < 0.2 ? normalized * 0.12 : 0.024
+    const capacityFactor = Math.max(floorFraction, eased)
+
+    return Math.min(WIND_FLEET_RATED_CAPACITY_KW, capacityFactor * WIND_FLEET_RATED_CAPACITY_KW)
   }
 }

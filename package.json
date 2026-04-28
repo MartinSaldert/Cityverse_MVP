@@ -14,6 +14,6 @@
     "start:iot": "node scripts/start-iot.mjs",
     "start:all": "node scripts/start-all.mjs",
     "demo:operator": "pnpm build:operator && node scripts/cityverse-operator-demo.mjs",
-    "test": "pnpm build:tool-surface && node --test tests/*.test.mjs"
+    "test": "pnpm build:tool-surface && pnpm build:vc && node --test tests/*.test.mjs"
   }
 }

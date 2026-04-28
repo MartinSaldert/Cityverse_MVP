@@ -36,9 +36,26 @@ This skill gives an OpenClaw-based agent the knowledge and tool mapping to:
 
 The `@cityverse/operator` package resolves `docsRoot` from its own install location when `CITYVERSE_DOCS_ROOT` is not set. This works correctly in the monorepo. For external installs, set the variable explicitly.
 
-## Tool adapter
+## Tool surface
 
-The underlying tool adapter lives at `packages/cityverse-operator/`. It provides typed TypeScript functions for every read and command flow. See `src/index.ts` for the full exported surface.
+The OpenClaw-facing tool layer lives at `packages/cityverse-tool-surface/`. It exports:
+
+- `CITYVERSE_TOOLS` — registry mapping every stable tool name to its handler function
+- `TOOL_NAMES` — typed array of all registered tool names
+- Individual handler exports for direct import (`handleVcGetWeather`, `handleAnalysisCompare`, etc.)
+- `ToolEnvelope` — the standard response envelope type
+
+Every handler:
+1. Validates its input with Zod
+2. Calls the appropriate `@cityverse/operator` function
+3. Returns a `ToolEnvelope` with `success`, `tool`, `source`, `action`, `timestampUtc`, `result`, `errors`, and optional `meta`
+
+Build the tool surface with:
+```
+pnpm build:tool-surface
+```
+
+The underlying operator package (`packages/cityverse-operator/`) contains all business logic. The tool surface is a thin wrapper only.
 
 ## Phase 1 command set
 

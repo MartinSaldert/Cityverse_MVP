@@ -176,6 +176,33 @@ Goal:
 - produce structured diffs the LLM can explain honestly,
 - keep the Phase 2 analysis layer portable across OpenClaw installs.
 
+### Packet 9, Cityverse AI OpenClaw tool surface integration
+
+See:
+- `docs/CITYVERSE_AI_OPERATOR_API.md`
+- `docs/CITYVERSE_AI_PORTABILITY_REQUIREMENTS.md`
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+
+Goal:
+- expose Cityverse through a real OpenClaw-facing tool surface,
+- map inspect/control/analyze flows onto `@cityverse/operator`,
+- keep the wrapper layer thin and portable,
+- update the skill docs to match the real callable tools.
+
+### Packet 10, Cityverse AI Phase 2.5 energy and wind modeling tightening
+
+See:
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+- `docs/CITYVERSE_AI_PORTABILITY_REQUIREMENTS.md`
+
+Goal:
+- improve the weakest parts of the Phase 2 energy/weather projection model,
+- make cloud-plus-wind hypothetical answers less misleading,
+- improve low/zero baseline wind handling,
+- preserve deterministic and portable analysis behavior.
+
 ## Short conclusion
 
 These packets are intentionally narrow enough to move quickly without asking Claude to improvise an entire civilization from one markdown file.

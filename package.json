@@ -9,10 +9,11 @@
     "build:vc": "pnpm --filter @cityverse/vc build",
     "build:iot": "pnpm --filter @cityverse/iot build",
     "build:operator": "pnpm --filter @cityverse/operator build",
+    "build:tool-surface": "pnpm build:operator && pnpm --filter @cityverse/tool-surface build",
     "start:vc": "node scripts/start-vc.mjs",
     "start:iot": "node scripts/start-iot.mjs",
     "start:all": "node scripts/start-all.mjs",
     "demo:operator": "pnpm build:operator && node scripts/cityverse-operator-demo.mjs",
-    "test": "pnpm build && node --test tests/*.test.mjs"
+    "test": "pnpm build:tool-surface && node --test tests/*.test.mjs"
   }
 }

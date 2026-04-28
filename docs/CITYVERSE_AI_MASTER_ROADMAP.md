@@ -46,10 +46,12 @@ Recommended order:
 2. live state tool adapter and narrow control surface
 3. audit and safety layer
 4. scenario analysis
-5. retrieval/doc intelligence
-6. DT-aware twin and scene reasoning
-7. Unity/avatar embodiment
-8. operational hardening and deployment profiles
+5. real OpenClaw-facing tool surface
+6. energy/scenario-model tightening
+7. retrieval/doc intelligence
+8. DT-aware twin and scene reasoning
+9. Unity/avatar embodiment
+10. operational hardening and deployment profiles
 
 This order is admirably dull, which is precisely why it has a chance of working.
 
@@ -136,7 +138,49 @@ Create the first trustworthy path for hypothetical questions.
 - unsupported areas are reported honestly
 - the agent no longer has to bluff when asked “what happens if…”
 
-## Milestone E, retrieval and doc intelligence
+## Milestone E, OpenClaw tool surface integration
+
+### Goal
+Expose Cityverse as a real OpenClaw-facing operator surface rather than relying on demos and implied wiring.
+
+### Deliver
+- a concrete OpenClaw-facing tool wrapper layer
+- explicit inspect/control/analyze/docs-search tool mapping
+- normalized outputs over `@cityverse/operator`
+- updated skill docs reflecting the real callable tool names
+- verification proving the wrapper works end to end
+
+### Reference packet
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+- `docs/CITYVERSE_AI_PORTABILITY_REQUIREMENTS.md`
+
+### Exit criteria
+- an OpenClaw agent can explicitly call Cityverse inspect/control/analyze flows
+- the wrapper remains thin and portable
+- the skill docs reflect reality instead of aspiration
+
+## Milestone F, Phase 2.5 energy/scenario-model tightening
+
+### Goal
+Improve the weakest current scenario-analysis behaviors, especially around wind and energy projection.
+
+### Deliver
+- improved wind projection behavior
+- better low/zero baseline handling
+- clearer energy result shaping and limitations
+- focused tests for cloud-plus-wind scenarios
+
+### Reference packet
+- `docs/CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+- `docs/CLAUDE_TASK_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+
+### Exit criteria
+- wind-related scenario answers are less misleading
+- weak near-zero wind cases are handled more honestly
+- deterministic portable analysis behavior is preserved
+
+## Milestone G, retrieval and doc intelligence
 
 ### Goal
 Improve explanation quality for architecture and operations questions.
@@ -159,7 +203,7 @@ Improve explanation quality for architecture and operations questions.
 - retrieval is focused and source-aware
 - the skill no longer needs to overstuff static instructions with every detail
 
-## Milestone F, DT-aware AI reasoning
+## Milestone H, DT-aware AI reasoning
 
 ### Goal
 Teach the operator to reason about the twin and scene, not just service APIs.
@@ -176,7 +220,7 @@ Teach the operator to reason about the twin and scene, not just service APIs.
 - the AI can explain what the user is seeing in the scene
 - DT is treated as a first-class reasoning surface, not an afterthought
 
-## Milestone G, Unity embodiment and avatar layer
+## Milestone I, Unity embodiment and avatar layer
 
 ### Goal
 Give the Cityverse AI an in-world presence without entangling reasoning and rendering.
@@ -193,7 +237,7 @@ Give the Cityverse AI an in-world presence without entangling reasoning and rend
 - embodiment remains optional and decoupled from core reasoning/control
 - failures in avatar systems do not break operator reasoning
 
-## Milestone H, operational hardening
+## Milestone J, operational hardening
 
 ### Goal
 Prepare the AI operator for broader deployment and long-term use.
@@ -238,13 +282,17 @@ This ladder is useful because it stops us pretending Level 6 matters before Leve
 1. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE1.md`
 2. implement command audit/safety hardening if not already folded into Phase 1
 3. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_SCENARIO_ANALYSIS.md`
-4. create retrieval packet after Phase 2 is proven
-5. extend toward DT-aware reasoning
-6. only then begin avatar implementation planning as executable work
+4. implement `CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+5. implement `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
+6. create retrieval packet after the tool surface and energy-model tightening are proven
+7. extend toward DT-aware reasoning
+8. only then begin avatar implementation planning as executable work
 
 ## Recommended future packets to add
 
-The next likely planning docs after Phase 2 are:
+The next likely planning docs after Phase 2 are now:
+- `CLAUDE_PACKET_CITYVERSE_AI_OPENCLAW_TOOL_SURFACE.md`
+- `CLAUDE_PACKET_CITYVERSE_AI_PHASE2_5_ENERGY_MODELING.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_PHASE3_RETRIEVAL.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_DT_REASONING.md`
 - `CLAUDE_PACKET_CITYVERSE_AI_AVATAR_BRIDGE.md`

@@ -23,19 +23,31 @@ namespace Cityverse.Receiver
         private TextMeshProUGUI _timeText;
         private TextMeshProUGUI _weatherText;
         private TextMeshProUGUI _metaText;
+        private TextMeshProUGUI _hintText;
 
         private void Awake()
         {
             BuildIfNeeded();
+            EnsureSafeWeatherTarget();
             SetWeatherPanelVisible(!startCollapsed);
         }
 
         private void OnEnable()
         {
+            if (weatherClient == null)
+                weatherClient = FindFirstObjectByType<WeatherApiClient>();
+
             if (weatherClient != null)
             {
                 weatherClient.OnWeatherUpdated += HandleWeatherUpdated;
                 weatherClient.OnWeatherError += HandleWeatherError;
+
+                if (weatherClient.LatestWeather != null)
+                    HandleWeatherUpdated(weatherClient.LatestWeather);
+            }
+            else
+            {
+                SetFallbackState("Weather client missing");
             }
         }
 
@@ -50,6 +62,7 @@ namespace Cityverse.Receiver
 
         public void ToggleWeatherPanel()
         {
+            EnsureSafeWeatherTarget();
             if (weatherHudTarget == null)
                 return;
 
@@ -58,8 +71,72 @@ namespace Cityverse.Receiver
 
         private void SetWeatherPanelVisible(bool visible)
         {
+            EnsureSafeWeatherTarget();
             if (weatherHudTarget != null)
                 weatherHudTarget.SetActive(visible);
+        }
+
+        private void EnsureSafeWeatherTarget()
+        {
+            if (IsUnsafeTarget(weatherHudTarget))
+                weatherHudTarget = null;
+
+            if (weatherHudTarget != null)
+                return;
+
+            var existing = GameObject.Find("WeatherDetailsHUD");
+            if (existing != null && !IsUnsafeTarget(existing))
+            {
+                weatherHudTarget = existing;
+                return;
+            }
+
+            var parent = transform.parent != null ? transform.parent : transform;
+            weatherHudTarget = CreateFallbackWeatherDetails(parent);
+        }
+
+        private bool IsUnsafeTarget(GameObject target)
+        {
+            if (target == null)
+                return false;
+
+            if (target == gameObject || target.transform.IsChildOf(transform))
+                return true;
+
+            var n = target.name;
+            return n == "CityverseHUD" || n == "HUDPanel" || n == "WeatherHudWidget" || n == "WeatherWidgetPanel";
+        }
+
+        private GameObject CreateFallbackWeatherDetails(Transform parent)
+        {
+            var go = new GameObject("WeatherDetailsHUD", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(Image));
+            go.transform.SetParent(parent, false);
+
+            var canvas = go.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 519;
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(420f, 220f);
+            rt.anchoredPosition = new Vector2(24f, -164f);
+
+            var img = go.GetComponent<Image>();
+            img.color = CityverseBuildingUI.Theme.ExpertPanelFill;
+            img.raycastTarget = false;
+
+            var outline = go.AddComponent<Outline>();
+            outline.effectColor = CityverseBuildingUI.Theme.ExpertBorder;
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var title = CityverseBuildingUI.AddText("WeatherDetailsText", rt, "Weather details\nWaiting for live weather data…", 20f, CityverseBuildingUI.Theme.ExpertTextSecondary, FontStyles.Normal);
+            title.enableWordWrapping = true;
+            CityverseBuildingUI.Anchor(title.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-36f, -36f), new Vector2(18f, -18f));
+
+            go.SetActive(false);
+            return go;
         }
 
         private void BuildIfNeeded()
@@ -82,7 +159,7 @@ namespace Cityverse.Receiver
 
             _panel = CityverseBuildingUI.AddImage("WeatherWidgetPanel", transform, CityverseBuildingUI.Theme.ExpertPanelFill);
             var panelRt = _panel.rectTransform;
-            CityverseBuildingUI.Anchor(panelRt, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(300f, 84f), new Vector2(24f, -24f));
+            CityverseBuildingUI.Anchor(panelRt, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(360f, 126f), new Vector2(24f, -24f));
             var outline = _panel.gameObject.AddComponent<Outline>();
             outline.effectColor = CityverseBuildingUI.Theme.ExpertBorder;
             outline.effectDistance = new Vector2(1f, -1f);
@@ -97,36 +174,66 @@ namespace Cityverse.Receiver
             _button.colors = colors;
             _button.onClick.AddListener(ToggleWeatherPanel);
 
-            _timeText = CityverseBuildingUI.AddText("TimeText", panelRt, "--:--", 28f, CityverseBuildingUI.Theme.ExpertTextPrimary, FontStyles.Bold);
-            CityverseBuildingUI.Anchor(_timeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, 32f), new Vector2(18f, -14f));
+            _timeText = CityverseBuildingUI.AddText("TimeText", panelRt, DateTime.Now.ToString("HH:mm"), 32f, CityverseBuildingUI.Theme.ExpertTextPrimary, FontStyles.Bold);
+            _timeText.enableWordWrapping = false;
+            CityverseBuildingUI.Anchor(_timeText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(132f, 38f), new Vector2(18f, -12f));
 
-            _weatherText = CityverseBuildingUI.AddText("WeatherText", panelRt, "Weather", 18f, CityverseBuildingUI.Theme.ExpertTextSecondary, FontStyles.Bold);
-            CityverseBuildingUI.Anchor(_weatherText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-132f, 24f), new Vector2(18f, -44f));
+            _weatherText = CityverseBuildingUI.AddText("WeatherText", panelRt, "Loading weather…", 22f, CityverseBuildingUI.Theme.ExpertTextSecondary, FontStyles.Bold);
+            _weatherText.enableWordWrapping = false;
+            CityverseBuildingUI.Anchor(_weatherText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-36f, 30f), new Vector2(18f, -50f));
 
-            _metaText = CityverseBuildingUI.AddText("MetaText", panelRt, "Click for weather details", 13f, CityverseBuildingUI.Theme.ExpertTextQuiet, FontStyles.Normal);
-            CityverseBuildingUI.Anchor(_metaText.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 0f), new Vector2(-36f, 18f), new Vector2(18f, 10f));
+            _metaText = CityverseBuildingUI.AddText("MetaText", panelRt, "Waiting for live weather", 16f, CityverseBuildingUI.Theme.ExpertTextQuiet, FontStyles.Normal);
+            _metaText.enableWordWrapping = false;
+            CityverseBuildingUI.Anchor(_metaText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-36f, 24f), new Vector2(18f, -80f));
+
+            _hintText = CityverseBuildingUI.AddText("HintText", panelRt, "Click for details", 14f, CityverseBuildingUI.Theme.ExpertTextQuiet, FontStyles.Normal);
+            _hintText.enableWordWrapping = false;
+            CityverseBuildingUI.Anchor(_hintText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-36f, 20f), new Vector2(18f, -102f));
         }
 
         private void HandleWeatherUpdated(WeatherStateDto dto)
         {
+            BuildIfNeeded();
             _timeText.text = TryFormatTime(dto.updatedAt);
-            _weatherText.text = $"{FormatCondition(dto.condition)}  ·  {dto.temperatureC:F1}°C";
+            _weatherText.text = $"{FormatCondition(dto.condition)} · {dto.temperatureC:F1}°C";
             _metaText.text = dto.isDaytime
-                ? $"{dto.season} day  ·  wind {dto.windSpeedMs:F1} m/s  ·  click for weather"
-                : $"{dto.season} night  ·  wind {dto.windSpeedMs:F1} m/s  ·  click for weather";
+                ? $"{FormatSeason(dto.season)} day · wind {dto.windSpeedMs:F1} m/s"
+                : $"{FormatSeason(dto.season)} night · wind {dto.windSpeedMs:F1} m/s";
+            if (_hintText != null)
+                _hintText.text = "Click for weather details";
+            UpdateFallbackDetails(dto);
         }
 
         private void HandleWeatherError(string message)
         {
-            _weatherText.text = "Weather unavailable";
-            _metaText.text = message;
+            SetFallbackState("Weather unavailable");
+            if (_metaText != null)
+                _metaText.text = Shorten(message, 42);
+        }
+
+        private void UpdateFallbackDetails(WeatherStateDto dto)
+        {
+            if (weatherHudTarget == null || dto == null)
+                return;
+
+            var text = weatherHudTarget.transform.Find("WeatherDetailsText")?.GetComponent<TextMeshProUGUI>();
+            if (text == null)
+                return;
+
+            text.text =
+                $"Weather details\n" +
+                $"Condition: {FormatCondition(dto.condition)}\n" +
+                $"Temperature: {dto.temperatureC:F1}°C (feels {dto.feelsLikeC:F1}°C)\n" +
+                $"Wind: {dto.windSpeedMs:F1} m/s @ {dto.windDirectionDeg:F0}°\n" +
+                $"Clouds: {dto.cloudCover * 100f:F0}% · Rain: {dto.precipitationMmH:F2} mm/h\n" +
+                $"{(dto.isDaytime ? "Day" : "Night")} · {FormatSeason(dto.season)} · Updated {TryFormatTime(dto.updatedAt)}";
         }
 
         private static string TryFormatTime(string isoTimestamp)
         {
             if (DateTime.TryParse(isoTimestamp, out var dateTime))
                 return dateTime.ToLocalTime().ToString("HH:mm");
-            return "--:--";
+            return DateTime.Now.ToString("HH:mm");
         }
 
         private static string FormatCondition(string condition)
@@ -134,6 +241,28 @@ namespace Cityverse.Receiver
             if (string.IsNullOrWhiteSpace(condition))
                 return "Unknown";
             return condition.Replace("_", " ");
+        }
+
+        private static string FormatSeason(string season)
+        {
+            return string.IsNullOrWhiteSpace(season) ? "Live" : season;
+        }
+
+        private void SetFallbackState(string weatherText)
+        {
+            BuildIfNeeded();
+            _timeText.text = DateTime.Now.ToString("HH:mm");
+            _weatherText.text = weatherText;
+            _metaText.text = "No live weather payload yet";
+            if (_hintText != null)
+                _hintText.text = "Click for details";
+        }
+
+        private static string Shorten(string value, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "No live weather payload yet";
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength - 1) + "…";
         }
     }
 }

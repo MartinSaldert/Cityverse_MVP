@@ -1,6 +1,14 @@
 import type { FastifyInstance } from 'fastify'
 import { BuildingsSummarySchema } from '@cityverse/contracts'
 import { getLatestBuildings } from './state.js'
+import {
+  getBuildingHistory,
+  isValidMetric,
+  isValidRange,
+  BUILDING_METRICS,
+  HISTORY_RANGES,
+  type HistoryRange,
+} from './history.js'
 
 export function registerBuildingRoutes(app: FastifyInstance): void {
   app.get('/buildings/current', async (_, reply) => {
@@ -39,5 +47,35 @@ export function registerBuildingRoutes(app: FastifyInstance): void {
     })
 
     return { ok: true, data: summary }
+  })
+
+  app.get('/buildings/:buildingId/history', async (req, reply) => {
+    const { buildingId } = req.params as { buildingId: string }
+    const query = req.query as { metric?: string; range?: string; limit?: string }
+
+    const metricRaw = query.metric ?? ''
+    if (!isValidMetric(metricRaw)) {
+      return reply.code(400).send({
+        ok: false,
+        error: `metric must be one of: ${BUILDING_METRICS.join(', ')}`,
+      })
+    }
+
+    const rangeRaw = query.range ?? '1h'
+    if (!isValidRange(rangeRaw)) {
+      return reply.code(400).send({
+        ok: false,
+        error: `range must be one of: ${HISTORY_RANGES.join(', ')}`,
+      })
+    }
+    const range: HistoryRange = rangeRaw
+
+    const limitParsed = Number.parseInt(query.limit ?? '300', 10)
+    const limit = Number.isFinite(limitParsed)
+      ? Math.min(Math.max(limitParsed, 1), 2000)
+      : 300
+
+    const points = getBuildingHistory(buildingId, metricRaw, range, limit)
+    return { ok: true, data: { buildingId, metric: metricRaw, range, points } }
   })
 }

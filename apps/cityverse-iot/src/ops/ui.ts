@@ -4,10 +4,11 @@ export function getDashboardHtml(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cityverse IOT &mdash; Monitoring</title>
+  <link rel="icon" type="image/png" href="/branding/syntra-icon.png">
+  <title>Syntra Operations &mdash; Monitoring</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-0:     oklch(0.18 0.012 230);
@@ -27,6 +28,7 @@ export function getDashboardHtml(): string {
       --radius-sm:6px;
       --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
       --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+      --cond: 'IBM Plex Sans Condensed', var(--sans);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -61,10 +63,10 @@ export function getDashboardHtml(): string {
       mix-blend-mode: overlay; opacity: 0.3;
     }
 
-    .app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 16px 20px 28px; }
+    .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 18px 22px 28px; }
 
     /* Chrome */
-    .chrome { display: flex; align-items: center; gap: 14px; padding: 8px 4px 14px; }
+    .chrome { display: grid; grid-template-columns: 540px 1px 1fr auto; align-items: center; column-gap: 14px; padding: 8px 4px 14px; }
     .topnav {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       margin: 0 4px 14px;
@@ -89,14 +91,24 @@ export function getDashboardHtml(): string {
       color: var(--text-0);
       box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--teal) 20%, transparent), 0 0 24px color-mix(in oklch, var(--teal) 18%, transparent);
     }
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-    .brand-name {
-      font-family: var(--mono); font-weight: 600; letter-spacing: 0.18em;
-      text-transform: uppercase; font-size: 13px;
+    .brand { display: flex; align-items: center; gap: 12px; width: 540px; min-width: 540px; }
+    .brand-logo {
+      width: auto;
+      height: 110px;
+      max-width: 520px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px color-mix(in oklch, var(--teal) 28%, transparent));
+      flex-shrink: 0;
     }
+    .brand-text { display: flex; flex-direction: column; gap: 2px; }
+    .brand-name {
+      font-family: var(--cond); font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; font-size: 13px; line-height: 1.1;
+    }
+    .brand-name span { font-size: inherit; line-height: inherit; }
     .brand-sub {
-      font-family: var(--mono); font-size: 9.5px; color: var(--text-2);
-      letter-spacing: 0.18em; text-transform: uppercase;
+      font-family: var(--mono); font-size: 10.5px; color: var(--text-2);
+      letter-spacing: 0.16em; text-transform: uppercase;
     }
     .chrome-div { width: 1px; height: 24px; background: var(--line); }
     .breadcrumbs {
@@ -106,7 +118,7 @@ export function getDashboardHtml(): string {
     }
     .breadcrumbs b { color: var(--text-0); font-weight: 500; }
     .breadcrumbs .sep { color: var(--text-3); }
-    .chrome-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .chrome-right { margin-left: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-self: end; }
     .pill {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line);
@@ -300,8 +312,11 @@ export function getDashboardHtml(): string {
     <!-- Chrome -->
     <div class="chrome">
       <div class="brand">
-        <span class="brand-name">Cityverse IOT</span>
-        <span class="brand-sub">Monitoring</span>
+        <img class="brand-logo" src="/branding/syntra-logo.png" alt="Syntra logo" onerror="this.style.display='none'" />
+        <div class="brand-text">
+          <span class="brand-name">Syntra <span style="color:var(--teal)">Operations</span></span>
+          <span class="brand-sub">Monitoring</span>
+        </div>
       </div>
       <div class="chrome-div"></div>
       <div class="breadcrumbs">System <span class="sep">/</span> <b>Telemetry</b></div>
@@ -312,9 +327,10 @@ export function getDashboardHtml(): string {
       </div>
     </div>
 
-    <nav class="topnav" aria-label="Cityverse navigation">
-      <a href="http://localhost:3001/">VC Console</a>
-      <a href="/" class="active">IOT Monitor</a>
+    <nav class="topnav" aria-label="Syntra navigation">
+      <a href="http://localhost:3001/">City Console</a>
+      <a href="/" class="active">Operations Monitor</a>
+      <a href="/ops-v2">Operations Monitor v2</a>
     </nav>
 
     <div id="error-banner" style="display:none" class="error-banner"></div>
@@ -583,7 +599,7 @@ export function getDashboardHtml(): string {
       .catch(function() {
         var eb = document.getElementById('error-banner')
         eb.style.display = 'block'
-        eb.textContent = 'Cannot reach /ops/summary \u2014 IOT service may be down.'
+        eb.textContent = 'Cannot reach /ops/summary \u2014 Operations service may be down.'
       })
   }
 

@@ -16,6 +16,9 @@ namespace Cityverse.Receiver
     /// </summary>
     public class BuildingSelectionUIController : MonoBehaviour
     {
+        [Header("Legacy")]
+        public bool enableLegacySelectionController = false;
+
         [Header("Data Source")]
         public BuildingsApiClient buildingsClient;
 
@@ -24,8 +27,8 @@ namespace Cityverse.Receiver
         public BuildingDetailPanelView detailPanelView;
 
         [Header("Selection")]
-        public string defaultSelectedBuildingId = "factory-01";
-        public bool showDetailPanelOnEnable = true;
+        public string defaultSelectedBuildingId = string.Empty;
+        public bool showDetailPanelOnEnable = false;
         public CityverseBuildingUI.BuildingCardMode mode = CityverseBuildingUI.BuildingCardMode.Expert;
         public bool selectByAttachedOverlayIfAvailable = true;
 
@@ -34,6 +37,16 @@ namespace Cityverse.Receiver
 
         private void OnEnable()
         {
+            if (!enableLegacySelectionController)
+            {
+                if (detailPanelView != null)
+                    detailPanelView.Show(false);
+                if (quickCardView != null)
+                    quickCardView.gameObject.SetActive(false);
+                enabled = false;
+                return;
+            }
+
             _selectedBuildingId = string.IsNullOrWhiteSpace(defaultSelectedBuildingId) ? _selectedBuildingId : defaultSelectedBuildingId;
 
             if (buildingsClient != null)
@@ -106,16 +119,19 @@ namespace Cityverse.Receiver
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(_selectedBuildingId) && buildings != null && buildings.Length > 0)
-                _selectedBuildingId = NormalizeBuildingId(buildings[0].id);
-
             RefreshSelected();
         }
 
         private void RefreshSelected()
         {
             if (string.IsNullOrWhiteSpace(_selectedBuildingId))
+            {
+                if (detailPanelView != null)
+                    detailPanelView.Show(false);
+                if (quickCardView != null)
+                    quickCardView.gameObject.SetActive(false);
                 return;
+            }
 
             if (!_buildingsById.TryGetValue(_selectedBuildingId, out var dto) || dto == null)
             {
@@ -136,7 +152,7 @@ namespace Cityverse.Receiver
             {
                 detailPanelView.mode = mode;
                 detailPanelView.Apply(vm);
-                detailPanelView.Show(showDetailPanelOnEnable);
+                detailPanelView.Show(true);
             }
 
             Debug.Log($"[BuildingSelectionUIController] Live data bound for '{dto.id}' demand={dto.currentDemandKw:F1} base={dto.baseDemandKw:F1} occ={dto.occupancyCount}/{dto.occupancyCapacity} weather={dto.weatherFactor:F2} updated={dto.updatedAt}");

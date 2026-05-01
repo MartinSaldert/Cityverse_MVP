@@ -13,7 +13,7 @@ namespace Cityverse.Receiver
         [Header("Panel Mode")]
         public CityverseBuildingUI.BuildingCardMode mode = CityverseBuildingUI.BuildingCardMode.Expert;
         public Vector2 panelSize = new Vector2(440f, 560f);
-        public bool startHidden = false;
+        public bool startHidden = true;
 
         private RectTransform _panel;
         private Image _panelImage;

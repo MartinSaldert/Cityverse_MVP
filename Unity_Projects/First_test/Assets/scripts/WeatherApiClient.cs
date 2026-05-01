@@ -24,6 +24,9 @@ namespace Cityverse.Receiver
         /// <summary>Fires when the request fails or the service returns ok:false.</summary>
         public event Action<string> OnWeatherError;
 
+        /// <summary>Most recent weather state, or null before the first successful poll.</summary>
+        public WeatherStateDto LatestWeather { get; private set; }
+
         private Coroutine _pollCoroutine;
 
         private void OnEnable()
@@ -80,6 +83,7 @@ namespace Cityverse.Receiver
                 yield break;
             }
 
+            LatestWeather = envelope.data;
             OnWeatherUpdated?.Invoke(envelope.data);
         }
     }

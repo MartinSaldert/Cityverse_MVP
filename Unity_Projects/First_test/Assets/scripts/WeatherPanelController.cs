@@ -24,17 +24,23 @@ namespace Cityverse.Receiver
 
         private void OnEnable()
         {
+            if (weatherClient == null)
+                weatherClient = FindFirstObjectByType<WeatherApiClient>();
+
+            SetDefaults();
+
             if (weatherClient != null)
             {
                 weatherClient.OnWeatherUpdated += HandleWeatherUpdated;
                 weatherClient.OnWeatherError += HandleWeatherError;
+
+                if (weatherClient.LatestWeather != null)
+                    HandleWeatherUpdated(weatherClient.LatestWeather);
             }
             else
             {
                 SetStatus("Weather client missing");
             }
-
-            SetDefaults();
         }
 
         private void OnDisable()

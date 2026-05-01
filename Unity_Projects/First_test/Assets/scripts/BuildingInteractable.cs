@@ -4,8 +4,7 @@ namespace Cityverse.Receiver
 {
     /// <summary>
     /// Lightweight interaction bridge attached to each building root.
-    /// Uses classic mouse callbacks from the building collider to drive shared
-    /// hover-card and click-to-HUD selection behavior.
+    /// Supports both legacy OnMouse* and explicit raycast driver.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class BuildingInteractable : MonoBehaviour
@@ -19,7 +18,7 @@ namespace Cityverse.Receiver
                 buildingId = gameObject.name;
         }
 
-        private void OnMouseEnter()
+        public void HandleHoverEnter()
         {
             if (cardsManager == null)
                 return;
@@ -27,7 +26,7 @@ namespace Cityverse.Receiver
             cardsManager.ShowQuickCardFor(buildingId);
         }
 
-        private void OnMouseExit()
+        public void HandleHoverExit()
         {
             if (cardsManager == null)
                 return;
@@ -36,7 +35,7 @@ namespace Cityverse.Receiver
                 cardsManager.HideQuickCard();
         }
 
-        private void OnMouseDown()
+        public void HandleClick()
         {
             if (cardsManager == null)
                 return;
@@ -44,5 +43,9 @@ namespace Cityverse.Receiver
             cardsManager.SelectBuilding(buildingId);
             cardsManager.ShowQuickCardFor(buildingId);
         }
+
+        private void OnMouseEnter() => HandleHoverEnter();
+        private void OnMouseExit() => HandleHoverExit();
+        private void OnMouseDown() => HandleClick();
     }
 }

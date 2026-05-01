@@ -17,6 +17,7 @@ namespace Cityverse.Receiver
         private const string SharedQuickCardName = "SharedBuildingQuickCard";
         private const string ManagerName = "BuildingCardsManager";
         private const string WeatherWidgetName = "WeatherHudWidget";
+        private const string WeatherDetailsName = "WeatherDetailsHUD";
         private const string QuickCardSuffix = "_QuickCardAnchor";
         private const string MarkerName = "Marker";
         private const string DefaultBuildingId = "factory-01";
@@ -31,23 +32,17 @@ namespace Cityverse.Receiver
         [UnityEditor.MenuItem("Tools/Cityverse/Switch To Expert Mode")]
         public static void SwitchToExpertMode()
         {
-            InstallOrUpdateInScene();
-            var manager = Object.FindFirstObjectByType<BuildingCardsManager>();
-            if (manager != null)
-                manager.SetMode(CityverseBuildingUI.BuildingCardMode.Expert);
+            SetModeWithoutReset(CityverseBuildingUI.BuildingCardMode.Expert);
         }
 
         [UnityEditor.MenuItem("Tools/Cityverse/Switch To Kids Mode")]
         public static void SwitchToKidsMode()
         {
-            InstallOrUpdateInScene();
-            var manager = Object.FindFirstObjectByType<BuildingCardsManager>();
-            if (manager != null)
-                manager.SetMode(CityverseBuildingUI.BuildingCardMode.Kids);
+            SetModeWithoutReset(CityverseBuildingUI.BuildingCardMode.Kids);
         }
 #endif
 
-        public static void InstallOrUpdateInScene()
+        public static void InstallOrUpdateInScene(bool resetSelectionAndHideDetail = true)
         {
             var buildingsReceiver = GameObject.Find("BuildingsReceiver");
             if (buildingsReceiver == null)
@@ -65,6 +60,8 @@ namespace Cityverse.Receiver
 
             var weatherReceiver = GameObject.Find("WeatherReceiverBehaviour");
             var weatherClient = weatherReceiver != null ? weatherReceiver.GetComponent<WeatherApiClient>() : null;
+            if (weatherClient == null)
+                weatherClient = Object.FindFirstObjectByType<WeatherApiClient>();
 
             EnsureEventSystem();
             var hudRoot = FindOrCreateHudRoot();
@@ -72,12 +69,14 @@ namespace Cityverse.Receiver
             var detailHud = FindOrCreateObject(DetailHudName, hudRoot.transform);
             var detailView = GetOrAddComponent<BuildingDetailPanelView>(detailHud);
             detailView.mode = CityverseBuildingUI.BuildingCardMode.Expert;
-            detailView.startHidden = false;
+            detailView.startHidden = true;
+            if (resetSelectionAndHideDetail)
+                detailView.Show(false);
 
             var sharedQuickCard = FindOrCreateObject(SharedQuickCardName, hudRoot.transform);
             var sharedQuickCardView = GetOrAddComponent<BuildingQuickCardView>(sharedQuickCard);
             sharedQuickCardView.mode = CityverseBuildingUI.BuildingCardMode.Expert;
-            sharedQuickCardView.localOffset = new Vector3(0f, 4.8f, 0f);
+            sharedQuickCardView.localOffset = new Vector3(0f, 2f, 0f);
             sharedQuickCardView.worldScale = new Vector3(0.01f, 0.01f, 0.01f);
             sharedQuickCardView.faceMainCamera = true;
             sharedQuickCardView.gameObject.SetActive(false);
@@ -87,11 +86,19 @@ namespace Cityverse.Receiver
             manager.buildingsClient = buildingsClient;
             manager.sharedQuickCardView = sharedQuickCardView;
             manager.detailPanelView = detailView;
-            manager.selectedBuildingId = DefaultBuildingId;
+            if (resetSelectionAndHideDetail)
+                manager.ClearSelection();
             manager.mode = CityverseBuildingUI.BuildingCardMode.Expert;
             manager.showQuickCard = true;
             manager.hideQuickCardWhenNotHovering = true;
             manager.buildingCards.Clear();
+
+            var raycaster = GetOrAddComponent<BuildingInteractionRaycaster>(managerObject);
+            raycaster.targetCamera = Camera.main;
+
+            RemoveAllExistingMarkers();
+
+            DisableLegacySelectionControllers();
 
             var buildingRoots = FindAllBuildings();
             foreach (var building in buildingRoots)
@@ -110,25 +117,37 @@ namespace Cityverse.Receiver
                 cardAnchor.buildingId = building.name;
                 cardAnchor.quickCardView = null;
 
-                var markerObject = FindOrCreateChild(anchor.transform, MarkerName);
-                var markerView = GetOrAddComponent<BuildingMarkerView>(markerObject);
-                markerView.mode = manager.mode;
-                markerView.localOffset = new Vector3(0f, 3.2f, 0f);
-                markerView.worldScale = new Vector3(0.0065f, 0.0065f, 0.0065f);
-                markerView.faceMainCamera = true;
+                RemoveChildIfExists(anchor.transform, MarkerName);
 
                 manager.RegisterCard(cardAnchor);
             }
 
+            var weatherDetails = FindOrCreateWeatherDetailsPanel(hudRoot.transform, weatherClient);
+            weatherDetails.SetActive(false);
+
             var weatherWidgetGo = FindOrCreateObject(WeatherWidgetName, hudRoot.transform);
             var weatherWidget = GetOrAddComponent<WeatherHudWidget>(weatherWidgetGo);
             weatherWidget.weatherClient = weatherClient;
-            weatherWidget.weatherHudTarget = FindWeatherPanelTarget(hudRoot);
+            weatherWidget.weatherHudTarget = weatherDetails;
             weatherWidget.startCollapsed = true;
 
-            manager.SelectBuilding(DefaultBuildingId);
-            manager.ShowQuickCardFor(DefaultBuildingId);
-            Debug.Log($"[CityverseBuildingUIInstaller] Installed/updated marker UX for {manager.buildingCards.Count} buildings.");
+            manager.HideQuickCard();
+            if (resetSelectionAndHideDetail && detailView != null)
+                detailView.Show(false);
+            Debug.Log($"[CityverseBuildingUIInstaller] Installed/updated building hover UX for {manager.buildingCards.Count} buildings.");
+        }
+
+        private static void SetModeWithoutReset(CityverseBuildingUI.BuildingCardMode mode)
+        {
+            var manager = Object.FindFirstObjectByType<BuildingCardsManager>();
+            if (manager == null)
+            {
+                InstallOrUpdateInScene(resetSelectionAndHideDetail: false);
+                manager = Object.FindFirstObjectByType<BuildingCardsManager>();
+            }
+
+            if (manager != null)
+                manager.SetMode(mode);
         }
 
         private static List<GameObject> FindAllBuildings()
@@ -215,6 +234,33 @@ namespace Cityverse.Receiver
             return go;
         }
 
+        private static void RemoveChildIfExists(Transform parent, string childName)
+        {
+            var existing = parent != null ? parent.Find(childName) : null;
+            if (existing == null)
+                return;
+
+            if (Application.isPlaying)
+                Object.Destroy(existing.gameObject);
+            else
+                Object.DestroyImmediate(existing.gameObject);
+        }
+
+        private static void RemoveAllExistingMarkers()
+        {
+            var markers = Object.FindObjectsByType<BuildingMarkerView>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var marker in markers)
+            {
+                if (marker == null)
+                    continue;
+
+                if (Application.isPlaying)
+                    Object.Destroy(marker.gameObject);
+                else
+                    Object.DestroyImmediate(marker.gameObject);
+            }
+        }
+
         private static GameObject FindOrCreateObject(string name, Transform parent)
         {
             var existing = GameObject.Find(name);
@@ -230,14 +276,60 @@ namespace Cityverse.Receiver
             return go;
         }
 
-        private static GameObject FindWeatherPanelTarget(GameObject hudRoot)
+        private static GameObject FindOrCreateWeatherDetailsPanel(Transform hudRoot, WeatherApiClient weatherClient)
         {
-            var existing = GameObject.Find("WeatherPanel");
-            if (existing != null)
-                return existing;
+            var panelGo = FindOrCreateObject(WeatherDetailsName, hudRoot);
+            var panelImage = panelGo.GetComponent<Image>();
+            if (panelImage == null)
+                panelImage = panelGo.AddComponent<Image>();
+            panelImage.color = CityverseBuildingUI.Theme.ExpertPanelFill;
+            panelImage.raycastTarget = false;
 
-            var legacy = GameObject.Find("HUDPanel");
-            return legacy != null ? legacy : hudRoot;
+            var panelRt = panelGo.GetComponent<RectTransform>();
+            if (panelRt == null)
+                panelRt = panelGo.AddComponent<RectTransform>();
+            CityverseBuildingUI.Anchor(panelRt, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(420f, 260f), new Vector2(24f, -164f));
+
+            var outline = panelGo.GetComponent<Outline>();
+            if (outline == null)
+                outline = panelGo.AddComponent<Outline>();
+            outline.effectColor = CityverseBuildingUI.Theme.ExpertBorder;
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var controller = GetOrAddComponent<WeatherPanelController>(panelGo);
+            controller.weatherClient = weatherClient;
+            controller.conditionText = FindOrCreatePanelText(panelRt, "ConditionText", "Condition: --", 20f, new Vector2(18f, -18f));
+            controller.temperatureText = FindOrCreatePanelText(panelRt, "TemperatureText", "Temperature: --", 18f, new Vector2(18f, -54f));
+            controller.windText = FindOrCreatePanelText(panelRt, "WindText", "Wind: --", 18f, new Vector2(18f, -88f));
+            controller.cloudText = FindOrCreatePanelText(panelRt, "CloudText", "Clouds: --", 18f, new Vector2(18f, -122f));
+            controller.dayNightText = FindOrCreatePanelText(panelRt, "DayNightText", "Day/Night: --", 18f, new Vector2(18f, -156f));
+            controller.seasonText = FindOrCreatePanelText(panelRt, "SeasonText", "Season: --", 18f, new Vector2(18f, -190f));
+            controller.statusText = FindOrCreatePanelText(panelRt, "StatusText", "Waiting for weather data...", 14f, new Vector2(18f, -226f));
+
+            return panelGo;
+        }
+
+        private static TMPro.TextMeshProUGUI FindOrCreatePanelText(RectTransform parent, string name, string defaultText, float fontSize, Vector2 anchoredPosition)
+        {
+            var existing = parent.Find(name);
+            TMPro.TextMeshProUGUI text;
+            if (existing != null)
+            {
+                text = existing.GetComponent<TMPro.TextMeshProUGUI>();
+                if (text == null)
+                    text = existing.gameObject.AddComponent<TMPro.TextMeshProUGUI>();
+            }
+            else
+            {
+                text = CityverseBuildingUI.AddText(name, parent, defaultText, fontSize, CityverseBuildingUI.Theme.ExpertTextSecondary, TMPro.FontStyles.Normal);
+            }
+
+            text.text = string.IsNullOrEmpty(text.text) ? defaultText : text.text;
+            text.fontSize = fontSize;
+            text.enableWordWrapping = false;
+            text.raycastTarget = false;
+            CityverseBuildingUI.Anchor(text.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 1f), new Vector2(-36f, 28f), anchoredPosition);
+            return text;
         }
 
         private static void DisableLegacyOverlay(GameObject building)
@@ -248,6 +340,20 @@ namespace Cityverse.Receiver
             var legacy = building.GetComponent<BuildingOverlayBehaviour>();
             if (legacy != null)
                 legacy.enabled = false;
+        }
+
+        private static void DisableLegacySelectionControllers()
+        {
+            var controllers = Object.FindObjectsByType<BuildingSelectionUIController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var controller in controllers)
+            {
+                if (controller == null)
+                    continue;
+
+                controller.defaultSelectedBuildingId = string.Empty;
+                controller.showDetailPanelOnEnable = false;
+                controller.enabled = false;
+            }
         }
 
         private static void EnsureEventSystem()

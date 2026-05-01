@@ -1,6 +1,7 @@
 import mqtt from 'mqtt'
 import { BuildingTelemetryPayloadSchema, mqttTopics } from '@cityverse/contracts'
 import { setLatestBuildings } from './state.js'
+import { recordBuildingMetrics } from './history.js'
 import { recordFlowIngest, recordBrokerConnected, recordBrokerDisconnected } from '../ops/flowRegistry.js'
 import { appendHistoryRecord } from '../history/store.js'
 import type { FastifyBaseLogger } from 'fastify'
@@ -39,6 +40,7 @@ export function startBuildingIngest(log: FastifyBaseLogger): mqtt.MqttClient {
     }
 
     setLatestBuildings(result.data)
+    recordBuildingMetrics(result.data.buildings, result.data.updatedAt)
     recordFlowIngest('buildings', result.data.updatedAt)
     appendHistoryRecord('buildings', result.data.updatedAt, {
       buildingCount: result.data.buildings.length,

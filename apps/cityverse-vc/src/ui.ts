@@ -3,8 +3,9 @@ export function renderHomePage(): string {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cityverse VC</title>
+  <title>Syntra City Console</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/branding/syntra-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
@@ -67,7 +68,7 @@ export function renderHomePage(): string {
 
     .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 18px 22px 28px; }
 
-    .chrome { display: flex; align-items: center; gap: 14px; padding: 8px 4px 14px; }
+    .chrome { display: grid; grid-template-columns: 540px 1px 1fr auto; align-items: center; column-gap: 14px; padding: 8px 4px 14px; }
     .topnav {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       margin: 0 4px 14px;
@@ -92,21 +93,32 @@ export function renderHomePage(): string {
       color: var(--text-0);
       box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 20%, transparent), 0 0 24px color-mix(in oklch, var(--accent) 18%, transparent);
     }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-name { font-family: var(--cond); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 13px; }
-    .brand-sub { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); letter-spacing: 0.16em; text-transform: uppercase; }
+    .brand { display: flex; align-items: center; gap: 12px; width: 540px; min-width: 540px; }
+    .brand > div { display: flex; flex-direction: column; justify-content: center; min-height: 52px; }
+    .brand-logo {
+      width: auto;
+      height: 110px;
+      max-width: 520px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px color-mix(in oklch, var(--accent) 28%, transparent));
+      flex-shrink: 0;
+    }
+    .brand-name { font-family: var(--cond); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-size: 13px; line-height: 1.1; min-height: 14px; display: flex; align-items: center; }
+    .brand-name span { font-size: inherit; line-height: inherit; }
+    .brand-sub { display: none; }
     .chrome-divider { width: 1px; height: 22px; background: var(--line); }
-    .breadcrumbs { font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: 0.12em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-    .breadcrumbs b { color: var(--text-0); font-weight: 500; }
-    .breadcrumbs .sep { color: var(--text-3); }
-    .chrome-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .chrome-right { margin-left: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-self: end; }
     .pill {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line);
       font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
-      color: var(--text-1); text-transform: uppercase; background: oklch(0.2 0.012 230 / 0.6);
+      color: var(--text-1); text-transform: uppercase; background: oklch(0.2 0.012 230 / 0.6); white-space: nowrap;
     }
-    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-lime); box-shadow: 0 0 10px var(--accent-lime); }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-3); }
+    .dot-ok { background: var(--accent-lime) !important; box-shadow: 0 0 10px var(--accent-lime); }
+    .dot-warn { background: var(--accent-amber) !important; box-shadow: 0 0 10px var(--accent-amber); }
+    .dot-err { background: var(--accent-rose) !important; box-shadow: 0 0 10px var(--accent-rose); }
+    .dot-idle { background: var(--text-3) !important; box-shadow: none; }
 
     .panel {
       background: linear-gradient(180deg, oklch(0.24 0.014 230 / 0.7), oklch(0.2 0.012 230 / 0.75));
@@ -347,29 +359,25 @@ export function renderHomePage(): string {
   <div class="app">
     <div class="chrome">
       <div class="brand">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-          <circle cx="13" cy="13" r="11.5" stroke="currentColor" stroke-opacity="0.35"/>
-          <circle cx="13" cy="13" r="7" stroke="currentColor" stroke-opacity="0.55"/>
-          <rect x="13" y="3" width="10" height="10" transform="rotate(45 13 3)" fill="var(--accent)" fill-opacity="0.85"/>
-        </svg>
+        <img class="brand-logo" src="/branding/syntra-logo.png" alt="Syntra logo" onerror="this.style.display='none'" />
         <div>
-          <div class="brand-name">Cityverse <span style="color:var(--accent)">VC</span></div>
-          <div class="brand-sub">Operator Console · MVP</div>
+          <div class="brand-name">Syntra <span style="color:var(--accent)">Console</span></div>
+          <div class="brand-sub"></div>
         </div>
       </div>
       <div class="chrome-divider"></div>
-      <div class="breadcrumbs">
-        <span>Simulation</span><span class="sep">/</span><b>MVP-01</b><span class="sep">/</span><b>CONTROL</b>
-      </div>
       <div class="chrome-right">
-        <span class="pill"><span class="dot"></span>Sim node healthy</span>
-        <span class="pill">Session · operator</span>
+        <span class="pill"><span id="hdrBrokerDot" class="dot dot-idle"></span><span id="hdrBrokerText">Broker: —</span></span>
+        <span class="pill"><span id="hdrBridgeDot" class="dot dot-idle"></span><span id="hdrBridgeText">Bridge: —</span></span>
+        <span class="pill"><span id="hdrOpenClawDot" class="dot dot-idle"></span><span id="hdrOpenClawText">OpenClaw: —</span></span>
+        <span class="pill"><span id="hdrUnityDot" class="dot dot-idle"></span><span id="hdrUnityText">Unity: —</span></span>
       </div>
     </div>
 
-    <nav class="topnav" aria-label="Cityverse navigation">
-      <a href="/" class="active">VC Console</a>
-      <a href="http://localhost:3002/">IOT Monitor</a>
+    <nav class="topnav" aria-label="Syntra navigation">
+      <a href="/" class="active">City Console</a>
+      <a href="http://localhost:3002/ops-v2">Operations Monitor</a>
+      <a href="/syntra">Syntra Prompt</a>
     </nav>
 
     <div class="hero">
@@ -917,6 +925,35 @@ export function renderHomePage(): string {
       setInterval(refresh, 2000)
       refresh()
     })
+  </script>
+  <script>
+    async function refreshHeaderStatus() {
+      try {
+        const res = await fetch('/api/header-status');
+        const data = await res.json();
+        const set = (prefix, state, text) => {
+          const dot = document.getElementById(prefix + 'Dot');
+          const label = document.getElementById(prefix + 'Text');
+          if (dot) dot.className = 'dot ' + state;
+          if (label) label.textContent = text;
+        };
+        set('hdrBroker', data?.broker?.ok ? 'dot-ok' : 'dot-warn', 'Broker: ' + (data?.broker?.ok ? 'Connected' : 'Waiting'));
+        set('hdrBridge', data?.bridge?.ok ? 'dot-ok' : 'dot-err', 'Bridge: ' + (data?.bridge?.ok ? 'Online' : 'Offline'));
+        set('hdrOpenClaw', data?.openclaw?.ok ? 'dot-ok' : 'dot-err', 'OpenClaw: ' + (data?.openclaw?.ok ? 'Ready' : 'Down'));
+        const unityState = data?.bridge?.unityConnected ? 'Connected' : (data?.bridge?.ok ? 'Waiting' : 'Offline');
+        set('hdrUnity', data?.bridge?.unityConnected ? 'dot-ok' : (data?.bridge?.ok ? 'dot-warn' : 'dot-err'), 'Unity: ' + unityState);
+      } catch {
+        const ids = ['hdrBroker', 'hdrBridge', 'hdrOpenClaw', 'hdrUnity'];
+        for (const id of ids) {
+          const dot = document.getElementById(id + 'Dot');
+          const label = document.getElementById(id + 'Text');
+          if (dot) dot.className = 'dot dot-err';
+          if (label) label.textContent = label.textContent.split(':')[0] + ': Unavailable';
+        }
+      }
+    }
+    refreshHeaderStatus();
+    setInterval(refreshHeaderStatus, 5000);
   </script>
 </body>
 </html>`

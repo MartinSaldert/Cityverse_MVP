@@ -13,7 +13,7 @@ namespace Cityverse.Receiver
         public BuildingsApiClient buildingsClient;
 
         [Header("Selection")]
-        public string selectedBuildingId = "factory-01";
+        public string selectedBuildingId = string.Empty;
         public CityverseBuildingUI.BuildingCardMode mode = CityverseBuildingUI.BuildingCardMode.Expert;
         public bool showQuickCard = true;
         public bool hideQuickCardWhenNotHovering = true;
@@ -26,6 +26,7 @@ namespace Cityverse.Receiver
         private readonly Dictionary<string, BuildingStateDto> _buildingsById = new Dictionary<string, BuildingStateDto>();
         private readonly Dictionary<string, BuildingCardAnchor> _cardsById = new Dictionary<string, BuildingCardAnchor>();
         private string _hoveredBuildingId;
+        private bool _hasUserSelection;
 
         private void OnEnable()
         {
@@ -59,19 +60,17 @@ namespace Cityverse.Receiver
             return Normalize(buildingId) == Normalize(selectedBuildingId);
         }
 
+        public void ClearSelection()
+        {
+            selectedBuildingId = string.Empty;
+            _hasUserSelection = false;
+            if (detailPanelView != null)
+                detailPanelView.Show(false);
+        }
+
         public void SetMode(CityverseBuildingUI.BuildingCardMode newMode)
         {
             mode = newMode;
-
-            foreach (var anchor in buildingCards)
-            {
-                if (anchor == null)
-                    continue;
-
-                var marker = anchor.GetComponentInChildren<BuildingMarkerView>(true);
-                if (marker != null)
-                    marker.mode = newMode;
-            }
 
             if (sharedQuickCardView != null)
                 sharedQuickCardView.mode = newMode;
@@ -88,6 +87,7 @@ namespace Cityverse.Receiver
                 return;
 
             selectedBuildingId = Normalize(buildingId);
+            _hasUserSelection = true;
             RefreshAll();
             ShowQuickCardFor(selectedBuildingId);
         }
@@ -133,10 +133,8 @@ namespace Cityverse.Receiver
             if (!hideQuickCardWhenNotHovering)
                 return;
 
-            if (sharedQuickCardView != null && !string.IsNullOrWhiteSpace(selectedBuildingId))
-            {
+            if (sharedQuickCardView != null)
                 sharedQuickCardView.gameObject.SetActive(false);
-            }
         }
 
         private void HandleBuildingsUpdated(BuildingStateDto[] buildings)
@@ -166,20 +164,20 @@ namespace Cityverse.Receiver
                 if (anchor == null)
                     continue;
 
-                var vm = CityverseBuildingUI.FromDto(dto, mode);
-                var marker = anchor.GetComponentInChildren<BuildingMarkerView>(true);
-                if (marker != null)
-                {
-                    marker.mode = mode;
-                    marker.Apply(vm, selected: kvp.Key == Normalize(selectedBuildingId));
-                }
+                RemoveMarkers(anchor.transform);
             }
 
             RefreshDetail();
 
-            var quickTarget = !string.IsNullOrWhiteSpace(_hoveredBuildingId) ? _hoveredBuildingId : selectedBuildingId;
+            // Keep quick card hover-driven when hideQuickCardWhenNotHovering is enabled.
+            var quickTarget = !string.IsNullOrWhiteSpace(_hoveredBuildingId)
+                ? _hoveredBuildingId
+                : (hideQuickCardWhenNotHovering ? null : selectedBuildingId);
+
             if (!string.IsNullOrWhiteSpace(quickTarget))
                 ShowQuickCardFor(quickTarget);
+            else if (sharedQuickCardView != null)
+                sharedQuickCardView.gameObject.SetActive(false);
         }
 
         private void RefreshDetail()
@@ -187,20 +185,17 @@ namespace Cityverse.Receiver
             if (detailPanelView == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(selectedBuildingId) && _buildingsById.Count > 0)
+            if (!_hasUserSelection || string.IsNullOrWhiteSpace(selectedBuildingId))
             {
-                foreach (var key in _buildingsById.Keys)
-                {
-                    selectedBuildingId = key;
-                    break;
-                }
+                detailPanelView.Show(false);
+                return;
             }
 
-            if (string.IsNullOrWhiteSpace(selectedBuildingId))
-                return;
-
             if (!_buildingsById.TryGetValue(Normalize(selectedBuildingId), out var dto) || dto == null)
+            {
+                detailPanelView.Show(false);
                 return;
+            }
 
             detailPanelView.mode = mode;
             detailPanelView.Apply(CityverseBuildingUI.FromDto(dto, mode));
@@ -226,6 +221,24 @@ namespace Cityverse.Receiver
         private void HandleBuildingsError(string message)
         {
             Debug.LogWarning($"[BuildingCardsManager] {message}");
+        }
+
+        private static void RemoveMarkers(Transform root)
+        {
+            if (root == null)
+                return;
+
+            var markers = root.GetComponentsInChildren<BuildingMarkerView>(true);
+            foreach (var marker in markers)
+            {
+                if (marker == null)
+                    continue;
+
+                if (Application.isPlaying)
+                    Destroy(marker.gameObject);
+                else
+                    DestroyImmediate(marker.gameObject);
+            }
         }
 
         private static string Normalize(string value)

@@ -13,7 +13,9 @@
     "start:vc": "node scripts/start-vc.mjs",
     "start:iot": "node scripts/start-iot.mjs",
     "start:all": "node scripts/start-all.mjs",
+    "start:avatar-bridge": "node voice/bridge/avatar-bridge.mjs",
     "demo:operator": "pnpm build:operator && node scripts/cityverse-operator-demo.mjs",
+    "demo:avatar-bridge": "node scripts/avatar-bridge-demo.mjs",
     "test": "pnpm build:tool-surface && pnpm build:vc && node --test tests/*.test.mjs"
   }
 }

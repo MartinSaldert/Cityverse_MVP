@@ -16,7 +16,7 @@ namespace Cityverse.Receiver
 
         [Header("World Card Settings")]
         public Vector2 size = new Vector2(320f, 180f);
-        public Vector3 localOffset = new Vector3(0f, 4f, 0f);
+        public Vector3 localOffset = new Vector3(0f, 2f, 0f);
         public Vector3 worldScale = new Vector3(0.01f, 0.01f, 0.01f);
         public bool faceMainCamera = true;
 
